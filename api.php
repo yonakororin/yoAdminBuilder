@@ -2,6 +2,45 @@
 require_once 'auth.php';
 header('Content-Type: application/json');
 
+// List files
+// Browser Action
+if (isset($_GET['action']) && $_GET['action'] === 'browse') {
+    $base_dir = $_GET['path'] ?? __DIR__;
+    // Sanity check: prevent traversing above root if needed, but for dev tool allow system browsing
+    if (!is_dir($base_dir)) $base_dir = __DIR__;
+    $base_dir = realpath($base_dir);
+    
+    $items = scandir($base_dir);
+    $result = [];
+    
+    foreach ($items as $item) {
+        if ($item === '.') continue;
+        $full = $base_dir . DIRECTORY_SEPARATOR . $item;
+        $type = is_dir($full) ? 'dir' : 'file';
+        
+        // Filter files: only JSON
+        if ($type === 'file' && !str_ends_with($item, '.json')) continue;
+        
+        $result[] = [
+            'name' => $item,
+            'type' => $type,
+            'path' => $full
+        ];
+    }
+    
+    // Sort: Dirs first, then files
+    usort($result, function($a, $b) {
+        if ($a['type'] === $b['type']) return strnatcmp($a['name'], $b['name']);
+        return ($a['type'] === 'dir') ? -1 : 1;
+    });
+
+    echo json_encode([
+        'current_path' => $base_dir,
+        'items' => $result
+    ]);
+    exit;
+}
+
 // Default file if none specified
 $filename = 'data.json';
 
@@ -10,12 +49,12 @@ $filename = 'data.json';
 // For this local dev tool, we'll allow basic alphanumeric + .json check.
 if (isset($_GET['file'])) {
     $requestedFile = $_GET['file'];
-    // Basic santization: only allow alphanumeric, underscores, hyphens, and .json
-    if (preg_match('/^[a-zA-Z0-9_\-\.]+\.json$/', $requestedFile)) {
+    // Relaxed validation to allow absolute paths from explorer
+    if (str_ends_with($requestedFile, '.json')) {
         $filename = $requestedFile;
     } else {
         http_response_code(400);
-        echo json_encode(['error' => 'Invalid filename']);
+        echo json_encode(['error' => 'Invalid filename (must be .json)']);
         exit;
     }
 }

@@ -59,13 +59,24 @@ async function init() {
 
     saveConfigBtn.addEventListener('click', saveStateToBackend);
 
-    // Add Settings Button if missing
+    // Add Navigation Buttons if missing
+    const actionsDiv = document.querySelector('.actions');
+
+    if (!document.getElementById('open-file-btn')) {
+        const openBtn = document.createElement('button');
+        openBtn.id = 'open-file-btn';
+        openBtn.className = 'btn-secondary';
+        openBtn.innerText = '📂 Open';
+        openBtn.style.marginRight = '0.5rem';
+        openBtn.onclick = () => window.location.href = 'index.php';
+        actionsDiv.insertBefore(openBtn, saveConfigBtn);
+    }
+
     if (!document.getElementById('config-settings-btn')) {
-        const actionsDiv = document.querySelector('.actions');
         const btn = document.createElement('button');
         btn.id = 'config-settings-btn';
         btn.className = 'btn-secondary';
-        btn.innerText = 'Settings';
+        btn.innerText = '⚙ Settings';
         btn.style.marginRight = '0.5rem';
         btn.onclick = () => openModal('settings');
         actionsDiv.insertBefore(btn, saveConfigBtn);
@@ -75,23 +86,23 @@ async function init() {
 // Data Handling
 async function loadState() {
     try {
-        // First, check if we have a stored preference for which file to load? 
-        // For simplicity, let's look for a 'config.json' which stores the target filename, 
-        // OR just load the default. 
-        // Let's assume we load 'admin_config.json' by default or what's in localStorage.
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlConfig = urlParams.get('config');
 
-        let targetFile = localStorage.getItem('yoAdminTargetFile') || 'admin_config.json';
+        // Prioritize URL, then Storage, then Default
+        let targetFile = urlConfig || localStorage.getItem('yoAdminTargetFile') || 'admin_config.json';
         state.config.filename = targetFile;
+
+        // If URL provided, sync storage so reloads work if we wanted, 
+        // but maybe safer to just use it for this session.
+        if (urlConfig) localStorage.setItem('yoAdminTargetFile', urlConfig);
 
         const response = await fetch(`api.php?file=${targetFile}`);
         if (response.ok) {
             const data = await response.json();
-            if (Array.isArray(data) && data.length > 0) {
-                state.menus = data;
+            if (Array.isArray(data)) {
+                state.menus = data; // even if empty
                 updateSidebar();
-                return;
-            } else if (Array.isArray(data)) {
-                state.menus = []; // empty array
                 return;
             }
         }
