@@ -1,0 +1,24 @@
+[
+    {
+        "id": "menu-sample",
+        "title": "Standalone Demo",
+        "submenus": [
+            {
+                "id": "sub-sample",
+                "title": "Welcome",
+                "tabs": [
+                    {
+                        "id": "tab-1",
+                        "title": "Home",
+                        "components": [
+                            {
+                                "type": "html",
+                                "code": "<h2>It Works!</h2><p>This is a standalone viewer reading from local JSON.</p>"
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    }
+]
