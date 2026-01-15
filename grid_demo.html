@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grid Layout Prototype</title>
+
+    <!-- Gridstack CSS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/gridstack.js/10.0.1/gridstack.min.css" rel="stylesheet" />
+
+    <style>
+        :root {
+            --bg: #0f172a;
+            --surface: #1e293b;
+            --border: #334155;
+            --accent: #3b82f6;
+            --text: #f8fafc;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: 'Inter', system-ui, sans-serif;
+            margin: 0;
+            padding: 2rem;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: var(--accent);
+        }
+
+        .toolbar {
+            margin-bottom: 1rem;
+            padding: 1rem;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            display: flex;
+            gap: 1rem;
+        }
+
+        .draggable-item {
+            background: #2d3748;
+            border: 1px solid var(--accent);
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: grab;
+            user-select: none;
+            color: white;
+            display: flex;
+            align-items: center;
+        }
+
+        .draggable-item:active {
+            cursor: grabbing;
+        }
+
+        /* Grid Area */
+        .grid-container {
+            background-color: rgba(255, 255, 255, 0.02);
+            border: 2px dashed var(--border);
+            border-radius: 12px;
+            flex: 1;
+            padding: 20px;
+            min-height: 500px;
+            /* Dot pattern */
+            background-image: radial-gradient(var(--border) 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+
+        /* Grid Item Styles */
+        .grid-stack-item {
+            /* padding provided by gridstack container opts */
+        }
+
+        .grid-stack-item-content {
+            background-color: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            transition: box-shadow 0.2s, border-color 0.2s;
+            overflow: hidden !important;
+            /* Important for resize */
+        }
+
+        .grid-stack-item-content:hover {
+            border-color: var(--accent);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Inner Content */
+        .widget-header {
+            width: 100%;
+            padding: 8px;
+            background: rgba(0, 0, 0, 0.2);
+            font-size: 0.8rem;
+            color: #94a3b8;
+            display: flex;
+            justify-content: space-between;
+            cursor: move;
+            /* Drag handle */
+        }
+
+        .widget-body {
+            flex: 1;
+            padding: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+        }
+
+        input {
+            width: 100%;
+            padding: 0.5rem;
+            background: #0f172a;
+            border: 1px solid var(--border);
+            color: white;
+            border-radius: 4px;
+        }
+
+        button {
+            width: 100%;
+            padding: 0.5rem;
+            background: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        /* Gridstack overrides */
+        .ui-resizable-handle {
+            opacity: 0.5 !important;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>Freely Positionable Layout (Standard Dashboard Grid)</h1>
+
+    <div class="toolbar">
+        <div class="draggable-item" ondragstart="drag(event)" draggable="true" data-type="input">
+            Input Field
+        </div>
+        <div class="draggable-item" ondragstart="drag(event)" draggable="true" data-type="button">
+            Button
+        </div>
+        <div class="draggable-item" ondragstart="drag(event)" draggable="true" data-type="chart">
+            Chart Widget
+        </div>
+        <div style="margin-left:auto; color:#94a3b8; font-size:0.9rem; display:flex; align-items:center;">
+            Drag items from here to the grid below.
+        </div>
+    </div>
+
+    <div class="grid-stack"></div>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gridstack.js/10.0.1/gridstack-all.min.js"></script>
+
+    <script>
+        // Init Grid
+        const grid = GridStack.init({
+            column: 12, // 12 column grid
+            row: 20,    // Allow up to 20 rows (or set 'auto' for infinite)
+            minRow: 10,
+            cellHeight: 80, // Height of one unit
+            margin: 10,     // Gap between items
+            float: true,    // TRUE = Free positioning (gravity off), FALSE = Gravity (items float up)
+            // "Freely positionable" usually means float: true
+            acceptWidgets: true,
+            dragIn: '.draggable-item', // Allow dragging from toolbar
+            dragInOptions: { revert: 'invalid', scroll: false, appendTo: 'body', helper: 'clone' }
+        });
+
+        // Add some default widgets
+        const initialWidgets = [
+            { x: 0, y: 0, w: 6, h: 2, content: 'input', id: 'w1' },
+            { x: 6, y: 0, w: 3, h: 2, content: 'button', id: 'w2' },
+            { x: 0, y: 2, w: 4, h: 4, content: 'chart', id: 'w3' }
+        ];
+
+        initialWidgets.forEach(w => addWidget(w));
+
+        // Function to create widget DOM
+        function addWidget(node) {
+            let contentHtml = '';
+            if (node.content === 'input') {
+                contentHtml = `
+                    <div class="widget-header">Input #${node.id} <span>::</span></div>
+                    <div class="widget-body">
+                        <input placeholder="Enter text...">
+                    </div>`;
+            } else if (node.content === 'button') {
+                contentHtml = `
+                    <div class="widget-header">Button #${node.id} <span>::</span></div>
+                    <div class="widget-body">
+                        <button>Click Me</button>
+                    </div>`;
+            } else {
+                contentHtml = `
+                    <div class="widget-header">Widget #${node.id} <span>::</span></div>
+                    <div class="widget-body" style="background:#1e3a8a; border-radius:4px;">
+                        <span>Chart Area</span>
+                    </div>`;
+            }
+
+            grid.addWidget({
+                x: node.x, y: node.y, w: node.w, h: node.h,
+                content: contentHtml
+            });
+        }
+
+        // Handle Drop from Toolbar (Standard HTML5 DnD integration requires a bit of setup with Gridstack)
+        // Gridstack 'dragIn' handles the interaction with jquery-ui style draggables or HTML5.
+        // For HTML5 simple draggable, gridstack monitors the drop.
+
+        grid.on('added', function (e, items) {
+            items.forEach(item => {
+                // If content is empty (dropped from sidebar), fill it
+                if (!item.el.querySelector('.widget-body')) {
+                    // Determine type from dragged element? 
+                    // Gridstack's dragIn simple clone doesn't pass complex data easily in vanilla.
+                    // We can just default it or clean it up.
+
+                    // For prototype simplification: Just putting a placeholder.
+                    // In real app, we check dataTransfer or helper class.
+                    const type = item.el.innerText.trim().toLowerCase().includes('input') ? 'input' :
+                        item.el.innerText.trim().toLowerCase().includes('button') ? 'button' : 'chart';
+
+                    item.el.innerHTML = `
+                         <div class="grid-stack-item-content">
+                            <div class="widget-header">New ${type} <span>::</span></div>
+                            <div class="widget-body">
+                                ${type === 'input' ? '<input placeholder="New Input">' :
+                            type === 'button' ? '<button>New Button</button>' :
+                                '<div style="width:100%;height:100%;background:#334155"></div>'}
+                            </div>
+                        </div>
+                    `;
+                }
+            });
+        });
+
+    </script>
+</body>
+
+</html>

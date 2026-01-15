@@ -1,343 +1,472 @@
+// ============================================================
+// yoAdmin Builder - App.js (v3)
+// シンプルな12カラムCSS Gridベースの実装
+// 外部ライブラリ不使用
+// ============================================================
 
-import { renderSidebar, renderTabs, renderComponent } from './render.js';
-
-// State Management
+// --- State ---
 const state = {
-    menus: [],
-    config: {
-        filename: 'admin_config.json' // Default filename
-    }
+    config: [],
+    selectedMenuId: null,
+    selectedSubmenuId: null,
+    activeTabId: null,
+    targetFile: 'admin_config.json'
 };
 
-// Selection State
-let selectedMenuId = null;
-let selectedSubmenuId = null;
-let activeTabId = null;
-
-// DOM Elements
-const menuListEl = document.getElementById('menu-list');
-const workspaceEl = document.getElementById('workspace');
-const emptyStateEl = document.getElementById('empty-state');
+// --- DOM Elements ---
+const menuTreeEl = document.getElementById('menu-tree');
+const tabsEl = document.getElementById('tabs');
+const gridEl = document.getElementById('grid');
 const breadcrumbsEl = document.getElementById('breadcrumbs');
-const addMenuBtn = document.getElementById('add-menu-btn');
-const tabsHeaderEl = document.getElementById('tabs-header');
-const addTabBtn = document.getElementById('add-tab-btn');
-const tabContentEl = document.getElementById('active-tab-content');
-const toolBtns = document.querySelectorAll('.tool-btn');
-// Modals
-const modalOverlay = document.getElementById('modal-overlay');
-const modalTitle = document.getElementById('modal-title');
-const modalContent = document.getElementById('modal-content');
-const modalConfirmBtn = document.getElementById('modal-confirm');
-const modalCancelBtn = document.getElementById('modal-cancel');
-// Settings
-const saveConfigBtn = document.getElementById('save-config-btn');
-const configSettingsBtn = document.getElementById('config-settings-btn'); // Need to add this to HTML
+const emptyStateEl = document.getElementById('empty-state');
+const workspaceEl = document.getElementById('workspace');
+const toolboxEl = document.getElementById('toolbox');
+const fileInputEl = document.getElementById('file-input');
 
-// Modal State
-let currentModalAction = null;
+// Modal
+const modalEl = document.getElementById('modal');
+const modalTitleEl = document.getElementById('modal-title');
+const modalBodyEl = document.getElementById('modal-body');
 
-// Initialization
+// --- Grid Drag/Resize State ---
+let dragState = null;
+
+// ============================================================
+// INITIALIZATION
+// ============================================================
 async function init() {
-    await loadState();
-
-    // Initial Render
-    updateSidebar();
-
-    // Event Listeners
-    addMenuBtn.addEventListener('click', () => openModal('add-menu'));
-    addTabBtn.addEventListener('click', () => openModal('add-tab'));
-    modalCancelBtn.addEventListener('click', closeModal);
-    modalConfirmBtn.addEventListener('click', handleModalConfirm);
-
-    toolBtns.forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            const type = e.currentTarget.dataset.type;
-            addComponent(type);
-        });
-    });
-
-    saveConfigBtn.addEventListener('click', saveStateToBackend);
-
-    // Add Navigation Buttons if missing
-    const actionsDiv = document.querySelector('.actions');
-
-    if (!document.getElementById('open-file-btn')) {
-        const openBtn = document.createElement('button');
-        openBtn.id = 'open-file-btn';
-        openBtn.className = 'btn-secondary';
-        openBtn.innerText = '📂 Open';
-        openBtn.style.marginRight = '0.5rem';
-        openBtn.onclick = () => window.location.href = 'index.php';
-        actionsDiv.insertBefore(openBtn, saveConfigBtn);
-    }
-
-    if (!document.getElementById('config-settings-btn')) {
-        const btn = document.createElement('button');
-        btn.id = 'config-settings-btn';
-        btn.className = 'btn-secondary';
-        btn.innerText = '⚙ Settings';
-        btn.style.marginRight = '0.5rem';
-        btn.onclick = () => openModal('settings');
-        actionsDiv.insertBefore(btn, saveConfigBtn);
-    }
+    await loadConfig();
+    renderSidebar();
+    setupEventListeners();
 }
 
-// Data Handling
-async function loadState() {
+async function loadConfig() {
     try {
-        const urlParams = new URLSearchParams(window.location.search);
-        const urlConfig = urlParams.get('config');
+        const file = fileInputEl.value || localStorage.getItem('yoAdminTargetFile') || 'admin_config.json';
+        state.targetFile = file;
+        fileInputEl.value = file;
+        localStorage.setItem('yoAdminTargetFile', file);
 
-        // Prioritize URL, then Storage, then Default
-        let targetFile = urlConfig || localStorage.getItem('yoAdminTargetFile') || 'admin_config.json';
-        state.config.filename = targetFile;
-
-        // If URL provided, sync storage so reloads work if we wanted, 
-        // but maybe safer to just use it for this session.
-        if (urlConfig) localStorage.setItem('yoAdminTargetFile', urlConfig);
-
-        const response = await fetch(`api.php?file=${targetFile}`);
-        if (response.ok) {
-            const data = await response.json();
-            if (Array.isArray(data)) {
-                state.menus = data; // even if empty
-                updateSidebar();
-                return;
-            }
+        const res = await fetch(`api.php?file=${file}`);
+        if (res.ok) {
+            state.config = await res.json();
+        } else {
+            state.config = [];
         }
+        // Reset selection on load
+        state.selectedMenuId = null;
+        state.selectedSubmenuId = null;
+        state.activeTabId = null;
     } catch (e) {
-        console.log('No backend data found for ' + state.config.filename);
-        state.menus = [];
+        console.error('Load failed:', e);
+        state.config = [];
     }
 }
 
-async function saveStateToBackend() {
-    const targetFile = state.config.filename;
-    localStorage.setItem('yoAdminTargetFile', targetFile);
-
+async function saveConfig() {
+    syncCurrentTab();
     try {
-        const response = await fetch(`api.php?file=${targetFile}`, {
-            method: 'POST',
-            body: JSON.stringify(state.menus)
-        });
-        const res = await response.text();
-        alert(`Saved to ${targetFile}!`);
+        const formData = new FormData();
+        formData.append('filename', state.targetFile);
+        formData.append('config', JSON.stringify(state.config));
+        const res = await fetch('api.php', { method: 'POST', body: formData });
+        const json = await res.json();
+        alert(json.success ? 'Saved!' : 'Save failed.');
     } catch (e) {
-        console.error('Backend save failed', e);
-        alert('Save Failed');
+        console.error(e);
+        alert('Error saving.');
     }
 }
 
-// Rendering Wrappers
-function updateSidebar() {
-    renderSidebar(menuListEl, state.menus, {
-        selectedMenuId,
-        selectedSubmenuId
-    }, {
-        onSelectMenu: (id) => {
-            selectedMenuId = id;
-            updateSidebar();
-        },
-        onAddSubmenu: (menuId) => {
-            selectedMenuId = menuId;
-            openModal('add-submenu');
-        },
-        onSelectSubmenu: (menuId, subId) => {
-            selectedMenuId = menuId;
-            selectedSubmenuId = subId;
-
-            // Auto select tab
-            const menu = state.menus.find(m => m.id === selectedMenuId);
-            const sub = menu.submenus.find(s => s.id === selectedSubmenuId);
-            if (!activeTabId && sub && sub.tabs.length > 0) {
-                activeTabId = sub.tabs[0].id;
-            } else if (sub && !sub.tabs.find(t => t.id === activeTabId)) {
-                activeTabId = sub.tabs.length > 0 ? sub.tabs[0].id : null;
-            }
-
-            updateSidebar();
-            updateWorkspace();
-        }
+// ============================================================
+// RENDERING
+// ============================================================
+function renderSidebar() {
+    menuTreeEl.innerHTML = '';
+    state.config.forEach(menu => {
+        const div = document.createElement('div');
+        div.className = 'menu-item';
+        div.innerHTML = `
+            <div class="menu-header">
+                <span><i class="fa-solid fa-folder"></i> ${menu.title}</span>
+                <button class="icon-btn add-sub" data-id="${menu.id}"><i class="fa-solid fa-plus"></i></button>
+            </div>
+            <div class="submenu-list">
+                ${(menu.submenus || []).map(sub => `
+                    <div class="submenu-item ${state.selectedSubmenuId === sub.id ? 'active' : ''}" data-menu="${menu.id}" data-sub="${sub.id}">${sub.title}</div>
+                `).join('')}
+            </div>
+        `;
+        menuTreeEl.appendChild(div);
     });
 }
 
-function updateWorkspace() {
-    if (!selectedSubmenuId) {
-        workspaceEl.classList.add('hidden');
-        emptyStateEl.classList.remove('hidden');
-        return;
-    }
+function renderTabs() {
+    const submenu = getSubmenu();
+    if (!submenu) return;
+    tabsEl.innerHTML = (submenu.tabs || []).map(t =>
+        `<div class="tab ${state.activeTabId === t.id ? 'active' : ''}" data-id="${t.id}">${t.title}</div>`
+    ).join('');
+}
 
-    const menu = state.menus.find(m => m.id === selectedMenuId);
-    if (!menu) return;
-    const submenu = menu.submenus.find(s => s.id === selectedSubmenuId);
-    if (!submenu) {
-        workspaceEl.classList.add('hidden');
-        return;
-    }
+function renderGrid() {
+    const tab = getTab();
+    if (!tab) return;
+    gridEl.innerHTML = '';
+    (tab.components || []).forEach(comp => {
+        const el = createGridItem(comp);
+        gridEl.appendChild(el);
+    });
+}
 
-    workspaceEl.classList.remove('hidden');
+function createGridItem(comp) {
+    const el = document.createElement('div');
+    el.className = 'grid-item';
+    el.dataset.id = comp.id;
+
+    // CSS Grid positioning (1-indexed)
+    el.style.gridColumnStart = (comp.x || 0) + 1;
+    el.style.gridColumnEnd = (comp.x || 0) + 1 + (comp.w || 4);
+    el.style.gridRowStart = (comp.y || 0) + 1;
+    el.style.gridRowEnd = (comp.y || 0) + 1 + (comp.h || 2);
+
+    el.innerHTML = `
+        <div class="item-header"><i class="fa-solid fa-grip-lines"></i></div>
+        <div class="item-content">${comp.label || comp.type || 'Widget'}</div>
+        <div class="resize-handle"></div>
+    `;
+    return el;
+}
+
+// ============================================================
+// STATE HELPERS
+// ============================================================
+function getSubmenu() {
+    const menu = state.config.find(m => m.id === state.selectedMenuId);
+    return menu?.submenus?.find(s => s.id === state.selectedSubmenuId);
+}
+
+function getTab() {
+    const sub = getSubmenu();
+    return sub?.tabs?.find(t => t.id === state.activeTabId);
+}
+
+function syncCurrentTab() {
+    const tab = getTab();
+    if (!tab) return;
+
+    // Update components from grid DOM
+    const items = gridEl.querySelectorAll('.grid-item');
+    const updatedComps = [];
+
+    items.forEach(el => {
+        const id = el.dataset.id;
+        // Parse grid position from style
+        const x = parseInt(el.style.gridColumnStart) - 1;
+        const w = parseInt(el.style.gridColumnEnd) - parseInt(el.style.gridColumnStart);
+        const y = parseInt(el.style.gridRowStart) - 1;
+        const h = parseInt(el.style.gridRowEnd) - parseInt(el.style.gridRowStart);
+
+        // Find original component data
+        const orig = tab.components.find(c => c.id === id) || {};
+        updatedComps.push({ ...orig, id, x, y, w, h });
+    });
+
+    tab.components = updatedComps;
+}
+
+// ============================================================
+// EVENT LISTENERS
+// ============================================================
+function setupEventListeners() {
+    // Add Menu
+    document.getElementById('add-menu-btn').addEventListener('click', () => {
+        const title = prompt('Menu title:');
+        if (title) {
+            state.config.push({ id: 'menu-' + Date.now(), title, submenus: [] });
+            renderSidebar();
+        }
+    });
+
+    // Add Submenu (delegated)
+    menuTreeEl.addEventListener('click', e => {
+        const addBtn = e.target.closest('.add-sub');
+        if (addBtn) {
+            const menuId = addBtn.dataset.id;
+            const title = prompt('Submenu title:');
+            if (title) {
+                const menu = state.config.find(m => m.id === menuId);
+                menu.submenus.push({ id: 'sub-' + Date.now(), title, tabs: [{ id: 'tab-' + Date.now(), title: 'Main', components: [] }] });
+                renderSidebar();
+            }
+            return;
+        }
+
+        // Select Submenu
+        const subItem = e.target.closest('.submenu-item');
+        if (subItem) {
+            state.selectedMenuId = subItem.dataset.menu;
+            state.selectedSubmenuId = subItem.dataset.sub;
+            const sub = getSubmenu();
+            if (sub?.tabs?.length > 0) state.activeTabId = sub.tabs[0].id;
+            showWorkspace();
+        }
+    });
+
+    // Tab selection (delegated)
+    tabsEl.addEventListener('click', e => {
+        const tab = e.target.closest('.tab');
+        if (tab) {
+            syncCurrentTab();
+            state.activeTabId = tab.dataset.id;
+            renderTabs();
+            renderGrid();
+        }
+    });
+
+    // Add Tab
+    document.getElementById('add-tab-btn').addEventListener('click', () => {
+        const sub = getSubmenu();
+        if (!sub) return;
+        const title = prompt('Tab title:');
+        if (title) {
+            const newId = 'tab-' + Date.now();
+            sub.tabs.push({ id: newId, title, components: [] });
+            state.activeTabId = newId;
+            renderTabs();
+            renderGrid();
+        }
+    });
+
+    // Save
+    document.getElementById('save-btn').addEventListener('click', saveConfig);
+
+    // Load
+    document.getElementById('load-btn').addEventListener('click', async () => {
+        if (confirm('Load will discard unsaved changes. Continue?')) {
+            await loadConfig();
+            renderSidebar();
+            emptyStateEl.classList.remove('hidden');
+            workspaceEl.classList.add('hidden');
+            toolboxEl.classList.add('hidden');
+            breadcrumbsEl.textContent = 'Select a submenu';
+        }
+    });
+
+    // Modal close
+    document.getElementById('modal-close').addEventListener('click', closeModal);
+    document.getElementById('modal-cancel').addEventListener('click', closeModal);
+
+    // Grid Drag & Drop from Toolbox
+    setupToolboxDnD();
+
+    // Grid Item Drag/Resize
+    setupGridInteraction();
+}
+
+function showWorkspace() {
     emptyStateEl.classList.add('hidden');
+    workspaceEl.classList.remove('hidden');
+    toolboxEl.classList.remove('hidden');
+    const menu = state.config.find(m => m.id === state.selectedMenuId);
+    const sub = getSubmenu();
+    breadcrumbsEl.textContent = `${menu?.title} > ${sub?.title}`;
 
-    breadcrumbsEl.innerText = `${menu.title} > ${submenu.title}`;
+    // Ensure tabs array exists
+    if (!sub.tabs) {
+        sub.tabs = [];
+    }
 
-    renderTabs(tabsHeaderEl, submenu.tabs, activeTabId, {
-        onSelectTab: (id) => {
-            activeTabId = id;
-            updateWorkspace();
+    // Auto-create default tab if none exists
+    if (sub.tabs.length === 0) {
+        const defaultTab = { id: 'tab-' + Date.now(), title: 'Main', components: [] };
+        sub.tabs.push(defaultTab);
+        console.log('Created default tab:', defaultTab);
+    }
+
+    // Always select first tab
+    state.activeTabId = sub.tabs[0].id;
+    console.log('showWorkspace - activeTabId:', state.activeTabId, 'tabs:', sub.tabs);
+
+    renderTabs();
+    renderGrid();
+}
+
+// ============================================================
+// TOOLBOX DRAG & DROP
+// ============================================================
+function setupToolboxDnD() {
+    const tools = document.querySelectorAll('.tool');
+    tools.forEach(tool => {
+        tool.addEventListener('dragstart', e => {
+            e.dataTransfer.setData('type', tool.dataset.type);
+        });
+    });
+
+    gridEl.addEventListener('dragover', e => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'copy';
+    });
+    gridEl.addEventListener('drop', e => {
+        e.preventDefault();
+        const type = e.dataTransfer.getData('type');
+        console.log('Drop event:', type);
+        if (!type) {
+            console.log('No type data');
+            return;
+        }
+
+        const tab = getTab();
+        if (!tab) {
+            console.log('No active tab');
+            return;
+        }
+
+        // IMPORTANT: Sync existing items first to preserve their positions
+        syncCurrentTab();
+
+        // Calculate grid position
+        const rect = gridEl.getBoundingClientRect();
+        const cellW = rect.width / 12;
+        const cellH = 44; // 40 + 4 gap
+        const x = Math.floor((e.clientX - rect.left) / cellW);
+        const y = Math.floor((e.clientY - rect.top) / cellH);
+        console.log('Calculated position:', x, y);
+
+        const newComp = {
+            id: 'comp-' + Date.now(),
+            type,
+            label: type.charAt(0).toUpperCase() + type.slice(1),
+            x: Math.max(0, Math.min(x, 8)), // Keep in bounds
+            y: Math.max(0, y),
+            w: 4,
+            h: 2
+        };
+        tab.components.push(newComp);
+        console.log('Added component:', newComp);
+
+        // Append new item only (don't re-render all)
+        const el = createGridItem(newComp);
+        gridEl.appendChild(el);
+        console.log('Appended to grid');
+    });
+}
+
+// ============================================================
+// GRID ITEM DRAG & RESIZE
+// ============================================================
+function setupGridInteraction() {
+    gridEl.addEventListener('mousedown', e => {
+        const item = e.target.closest('.grid-item');
+        if (!item) return;
+
+        const isResize = e.target.classList.contains('resize-handle');
+        const isHeader = e.target.closest('.item-header');
+
+        if (!isResize && !isHeader) return;
+
+        e.preventDefault();
+        const rect = gridEl.getBoundingClientRect();
+        const cellW = rect.width / 12;
+        const cellH = 44;
+
+        dragState = {
+            item,
+            isResize,
+            startX: e.clientX,
+            startY: e.clientY,
+            origColStart: parseInt(item.style.gridColumnStart),
+            origColEnd: parseInt(item.style.gridColumnEnd),
+            origRowStart: parseInt(item.style.gridRowStart),
+            origRowEnd: parseInt(item.style.gridRowEnd),
+            cellW,
+            cellH
+        };
+
+        if (!isResize) item.classList.add('dragging');
+
+        // Create ghost
+        const ghost = document.createElement('div');
+        ghost.className = 'ghost';
+        ghost.id = 'drag-ghost';
+        ghost.style.gridColumnStart = dragState.origColStart;
+        ghost.style.gridColumnEnd = dragState.origColEnd;
+        ghost.style.gridRowStart = dragState.origRowStart;
+        ghost.style.gridRowEnd = dragState.origRowEnd;
+        gridEl.appendChild(ghost);
+    });
+
+    window.addEventListener('mousemove', e => {
+        if (!dragState) return;
+
+        const { isResize, startX, startY, origColStart, origColEnd, origRowStart, origRowEnd, cellW, cellH } = dragState;
+        const dx = Math.round((e.clientX - startX) / cellW);
+        const dy = Math.round((e.clientY - startY) / cellH);
+
+        const ghost = document.getElementById('drag-ghost');
+        if (!ghost) return;
+
+        if (isResize) {
+            // Resize: change end positions
+            let newColEnd = origColEnd + dx;
+            let newRowEnd = origRowEnd + dy;
+            // Min size
+            if (newColEnd - origColStart < 2) newColEnd = origColStart + 2;
+            if (newRowEnd - origRowStart < 1) newRowEnd = origRowStart + 1;
+            // Max col
+            if (newColEnd > 13) newColEnd = 13;
+            ghost.style.gridColumnEnd = newColEnd;
+            ghost.style.gridRowEnd = newRowEnd;
+        } else {
+            // Move: change start positions, keep size
+            const w = origColEnd - origColStart;
+            const h = origRowEnd - origRowStart;
+            let newColStart = origColStart + dx;
+            let newRowStart = origRowStart + dy;
+            // Boundaries
+            if (newColStart < 1) newColStart = 1;
+            if (newColStart + w > 13) newColStart = 13 - w;
+            if (newRowStart < 1) newRowStart = 1;
+
+            ghost.style.gridColumnStart = newColStart;
+            ghost.style.gridColumnEnd = newColStart + w;
+            ghost.style.gridRowStart = newRowStart;
+            ghost.style.gridRowEnd = newRowStart + h;
         }
     });
 
-    renderTabContent(submenu);
-}
+    window.addEventListener('mouseup', () => {
+        if (!dragState) return;
 
-function renderTabContent(submenu) {
-    tabContentEl.innerHTML = '';
+        const ghost = document.getElementById('drag-ghost');
+        if (ghost) {
+            // Apply ghost position to item
+            dragState.item.style.gridColumnStart = ghost.style.gridColumnStart;
+            dragState.item.style.gridColumnEnd = ghost.style.gridColumnEnd;
+            dragState.item.style.gridRowStart = ghost.style.gridRowStart;
+            dragState.item.style.gridRowEnd = ghost.style.gridRowEnd;
+            ghost.remove();
+        }
 
-    const tab = submenu.tabs.find(t => t.id === activeTabId);
-    if (!tab) {
-        tabContentEl.innerHTML = '<p style="color:var(--text-secondary)">No tabs. Add one!</p>';
-        return;
-    }
-
-    tab.components.forEach((comp, index) => {
-        const el = renderComponent(comp, index, {
-            onDeleteComponent: (idx) => deleteComponent(idx)
-        }, true); // true = isBuilder
-        tabContentEl.appendChild(el);
+        dragState.item.classList.remove('dragging');
+        dragState = null;
     });
 }
 
-// Logic Actions
-function addComponent(type) {
-    if (!activeTabId) {
-        alert("Please select or create a tab first.");
-        return;
-    }
-    currentModalAction = { type: 'add-component', compType: type };
-    if (type === 'html') openModal('add-html');
-    else openModal('add-basic-comp');
-}
-
-function deleteComponent(index) {
-    const menu = state.menus.find(m => m.id === selectedMenuId);
-    const submenu = menu.submenus.find(s => s.id === selectedSubmenuId);
-    const tab = submenu.tabs.find(t => t.id === activeTabId);
-    tab.components.splice(index, 1);
-    updateWorkspace(); // Don't auto save, wait for user
-}
-
-// Modal Logic
-function openModal(actionType) {
-    modalOverlay.classList.remove('hidden');
-    if (typeof actionType === 'string') {
-        if (!currentModalAction) currentModalAction = { type: actionType };
-        else currentModalAction.type = actionType;
-    }
-
-    modalContent.innerHTML = '';
-
-    if (currentModalAction.type === 'settings') {
-        modalTitle.innerText = 'Settings';
-        modalContent.innerHTML = `
-            <div class="form-group">
-                <label>Target JSON Filename</label>
-                <input id="modal-filename" class="form-input" value="${state.config.filename}">
-                <small style="color:var(--text-secondary)">This file will be used for saving/loading.</small>
-            </div>
-        `;
-    } else if (currentModalAction.type === 'add-menu') {
-        modalTitle.innerText = 'Add New Menu';
-        modalContent.innerHTML = '<div class="form-group"><label>Menu Title</label><input id="modal-input" class="form-input" autofocus></div>';
-    } else if (currentModalAction.type === 'add-submenu') {
-        modalTitle.innerText = 'Add Submenu';
-        modalContent.innerHTML = '<div class="form-group"><label>Submenu Title</label><input id="modal-input" class="form-input" autofocus></div>';
-    } else if (currentModalAction.type === 'add-tab') {
-        modalTitle.innerText = 'Add Tab';
-        modalContent.innerHTML = '<div class="form-group"><label>Tab Title</label><input id="modal-input" class="form-input" autofocus></div>';
-    } else if (currentModalAction.type === 'add-basic-comp') {
-        const label = currentModalAction.compType === 'button' ? 'Button Text' : 'Label';
-        modalTitle.innerText = `Add ${currentModalAction.compType}`;
-        modalContent.innerHTML = `<div class="form-group"><label>${label}</label><input id="modal-input" class="form-input" autofocus></div>`;
-    } else if (currentModalAction.type === 'add-html') {
-        modalTitle.innerText = 'Add Custom HTML/JS';
-        modalContent.innerHTML = `
-            <div class="form-group">
-                <label>HTML Content</label>
-                <textarea id="modal-html" class="code-editor" placeholder="<div>Hello World</div>"></textarea>
-            </div>
-            <div class="form-group">
-                <label>Javascript (Optional)</label>
-                <textarea id="modal-js" class="code-editor" placeholder="console.log('loaded')"></textarea>
-            </div>
-        `;
-    }
+// ============================================================
+// MODAL
+// ============================================================
+function openModal(title, bodyHtml) {
+    modalTitleEl.textContent = title;
+    modalBodyEl.innerHTML = bodyHtml;
+    modalEl.classList.remove('hidden');
 }
 
 function closeModal() {
-    modalOverlay.classList.add('hidden');
-    currentModalAction = null;
+    modalEl.classList.add('hidden');
 }
 
-function handleModalConfirm() {
-    if (!currentModalAction) return;
-
-    if (currentModalAction.type === 'settings') {
-        const filename = document.getElementById('modal-filename').value;
-        if (filename) {
-            state.config.filename = filename;
-            // Optionally reload?
-            if (confirm("Reload with new file? Unsaved changes will be lost.")) {
-                localStorage.setItem('yoAdminTargetFile', filename);
-                location.reload();
-            }
-        }
-    } else if (['add-menu', 'add-submenu', 'add-tab', 'add-basic-comp'].includes(currentModalAction.type)) {
-        const input = document.getElementById('modal-input');
-        if (!input.value) return;
-        const val = input.value;
-
-        if (currentModalAction.type === 'add-menu') {
-            state.menus.push({
-                id: 'menu-' + Date.now(),
-                title: val,
-                submenus: []
-            });
-            updateSidebar();
-        } else if (currentModalAction.type === 'add-submenu') {
-            const menu = state.menus.find(m => m.id === selectedMenuId);
-            const newSub = { id: 'sub-' + Date.now(), title: val, tabs: [] };
-            menu.submenus.push(newSub);
-            updateSidebar();
-            // Trigger selection of this new submenu
-            // ... manual implementation ...
-        } else if (currentModalAction.type === 'add-tab') {
-            const menu = state.menus.find(m => m.id === selectedMenuId);
-            const submenu = menu.submenus.find(s => s.id === selectedSubmenuId);
-            const newTab = { id: 'tab-' + Date.now(), title: val, components: [] };
-            submenu.tabs.push(newTab);
-            activeTabId = newTab.id;
-            updateWorkspace();
-        } else if (currentModalAction.type === 'add-basic-comp') {
-            const menu = state.menus.find(m => m.id === selectedMenuId);
-            const submenu = menu.submenus.find(s => s.id === selectedSubmenuId);
-            const tab = submenu.tabs.find(t => t.id === activeTabId);
-            tab.components.push({ type: currentModalAction.compType, label: val });
-            updateWorkspace();
-        }
-    } else if (currentModalAction.type === 'add-html') {
-        const html = document.getElementById('modal-html').value;
-        const js = document.getElementById('modal-js').value;
-        const menu = state.menus.find(m => m.id === selectedMenuId);
-        const submenu = menu.submenus.find(s => s.id === selectedSubmenuId);
-        const tab = submenu.tabs.find(t => t.id === activeTabId);
-        tab.components.push({ type: 'html', code: html, script: js });
-        updateWorkspace();
-    }
-
-    closeModal();
-}
-
-// Start
+// ============================================================
+// START
+// ============================================================
 init();

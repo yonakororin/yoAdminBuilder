@@ -60,13 +60,18 @@ if (isset($_GET['file'])) {
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $input = file_get_contents('php://input');
-    if ($input) {
-        file_put_contents($filename, $input);
-        echo json_encode(['status' => 'success', 'file' => $filename]);
+    $targetFile = $_POST['filename'] ?? $filename;
+    $content = $_POST['config'] ?? file_get_contents('php://input');
+
+    if ($content) {
+        // Basic security check could go here
+        if (!str_ends_with($targetFile, '.json')) $targetFile .= '.json';
+        
+        file_put_contents($targetFile, $content);
+        echo json_encode(['success' => true, 'file' => $targetFile]);
     } else {
         http_response_code(400);
-        echo json_encode(['error' => 'No data received']);
+        echo json_encode(['success' => false, 'message' => 'No data received']);
     }
 } elseif ($_SERVER['REQUEST_METHOD'] === 'GET') {
     if (file_exists($filename)) {
