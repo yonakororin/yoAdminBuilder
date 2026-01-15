@@ -13,6 +13,7 @@
         .btn-add, .add-sub, .icon-btn, .toolbox, .item-header, .resize-handle { display: none !important; }
         .sidebar-footer { display: none; }
         .grid-item { cursor: default; }
+        .grid-item:hover { border-color: var(--border); box-shadow: none; }
     </style>
 </head>
 <body>
@@ -102,7 +103,7 @@
             const g = document.getElementById('grid');
             g.innerHTML = (t?.components || []).map(c => `
                 <div class="grid-item" style="grid-column:${(c.x||0)+1}/span ${c.w||4};grid-row:${(c.y||0)+1}/span ${c.h||2}">
-                    <div class="item-content">${c.label||c.type||'Widget'}</div>
+                    <div class="item-content">${c.content || ''}</div>
                 </div>
             `).join('');
         }
