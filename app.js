@@ -104,9 +104,20 @@ function renderSidebar() {
 function renderTabs() {
     const submenu = getSubmenu();
     if (!submenu) return;
-    tabsEl.innerHTML = (submenu.tabs || []).map(t =>
-        `<div class="tab ${state.activeTabId === t.id ? 'active' : ''}" data-id="${t.id}">${t.title}</div>`
-    ).join('');
+
+    // Render tabs with edit controls + add button
+    let html = (submenu.tabs || []).map(t => `
+        <div class="tab ${state.activeTabId === t.id ? 'active' : ''}" data-id="${t.id}">
+            <span class="tab-title">${t.title}</span>
+            <i class="fa-solid fa-pen tab-edit" title="Rename"></i>
+            <i class="fa-solid fa-times tab-close" title="Delete"></i>
+        </div>
+    `).join('');
+
+    // Add button at the end
+    html += '<button id="add-tab-btn" class="tab-add"><i class="fa-solid fa-plus"></i></button>';
+
+    tabsEl.innerHTML = html;
 }
 
 function renderGrid() {
@@ -215,24 +226,64 @@ function setupEventListeners() {
 
     // Tab selection (delegated)
     tabsEl.addEventListener('click', e => {
+        // Delete Tab
+        if (e.target.classList.contains('tab-close')) {
+            e.stopPropagation();
+            const tabId = e.target.closest('.tab').dataset.id;
+            const sub = getSubmenu();
+
+            if (sub.tabs.length <= 1) {
+                alert('Cannot delete the last tab.');
+                return;
+            }
+
+            if (confirm('Delete this tab?')) {
+                sub.tabs = sub.tabs.filter(t => t.id !== tabId);
+                if (state.activeTabId === tabId) {
+                    state.activeTabId = sub.tabs[0].id; // Switch to first available
+                }
+                renderTabs();
+                renderGrid();
+            }
+            return;
+        }
+
+        // Rename Tab (Click on edit icon)
+        if (e.target.classList.contains('tab-edit')) {
+            e.stopPropagation();
+            const tabEl = e.target.closest('.tab');
+            const tabId = tabEl.dataset.id;
+            const sub = getSubmenu();
+            const tabData = sub.tabs.find(t => t.id === tabId);
+
+            const newTitle = prompt('Rename tab:', tabData.title);
+            if (newTitle && newTitle.trim() !== '') {
+                tabData.title = newTitle.trim();
+                renderTabs();
+            }
+            return;
+        }
+
+        // Add Tab (button is now inside tabs container)
+        if (e.target.closest('#add-tab-btn')) {
+            const sub = getSubmenu();
+            if (!sub) return;
+            const title = prompt('Tab title:');
+            if (title) {
+                const newId = 'tab-' + Date.now();
+                sub.tabs.push({ id: newId, title, components: [] });
+                state.activeTabId = newId;
+                renderTabs();
+                renderGrid();
+            }
+            return;
+        }
+
+        // Select Tab
         const tab = e.target.closest('.tab');
         if (tab) {
             syncCurrentTab();
             state.activeTabId = tab.dataset.id;
-            renderTabs();
-            renderGrid();
-        }
-    });
-
-    // Add Tab
-    document.getElementById('add-tab-btn').addEventListener('click', () => {
-        const sub = getSubmenu();
-        if (!sub) return;
-        const title = prompt('Tab title:');
-        if (title) {
-            const newId = 'tab-' + Date.now();
-            sub.tabs.push({ id: newId, title, components: [] });
-            state.activeTabId = newId;
             renderTabs();
             renderGrid();
         }
@@ -256,6 +307,11 @@ function setupEventListeners() {
     // Modal close
     document.getElementById('modal-close').addEventListener('click', closeModal);
     document.getElementById('modal-cancel').addEventListener('click', closeModal);
+
+    // Toolbox Toggle
+    document.getElementById('toolbox-toggle').addEventListener('click', () => {
+        document.getElementById('toolbox').classList.toggle('collapsed');
+    });
 
     // Grid Drag & Drop from Toolbox
     setupToolboxDnD();
