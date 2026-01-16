@@ -32,7 +32,7 @@
         <!-- Sidebar -->
         <aside class="sidebar">
             <div class="brand">
-                <i class="fa-solid fa-shapes"></i> yoAdmin
+                <a href="index.php" style="color:inherit;text-decoration:none;"><i class="fa-solid fa-shapes"></i> yoAdmin</a>
             </div>
             <button id="add-menu-btn" class="btn-add"><i class="fa-solid fa-plus"></i> Add Menu</button>
             <div id="menu-tree" class="menu-tree"></div>

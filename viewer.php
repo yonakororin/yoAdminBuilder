@@ -31,7 +31,7 @@
     <div id="app">
         <aside class="sidebar">
             <div class="brand">
-                <i class="fa-solid fa-shapes"></i> yoAdmin
+                <a href="index.php" style="color:inherit;text-decoration:none;"><i class="fa-solid fa-shapes"></i> yoAdmin</a>
             </div>
             <div id="menu-tree" class="menu-tree"></div>
             <div class="sidebar-footer">

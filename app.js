@@ -44,7 +44,15 @@ async function init() {
 
 async function loadConfig() {
     try {
-        const file = fileInputEl.value || localStorage.getItem('yoAdminTargetFile') || 'admin_config.json';
+        // Prioritize URL param > Input Value (if changed by user, but init calls this once) > LocalStorage > Default
+        // On init, input value is default "admin_config.json". We should check URL first.
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlConfig = urlParams.get('config');
+
+        // If URL has config, use it. Otherwise fall back to storage or default.
+        // We ignore fileInputEl.value on initial load because it has a hardcoded default.
+        const file = urlConfig || localStorage.getItem('yoAdminTargetFile') || 'admin_config.json';
+
         state.targetFile = file;
         fileInputEl.value = file;
         localStorage.setItem('yoAdminTargetFile', file);
