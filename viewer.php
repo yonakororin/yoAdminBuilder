@@ -12,8 +12,15 @@
         /* Viewer overrides - hide edit controls */
         .btn-add, .add-sub, .icon-btn, .toolbox, .item-header, .resize-handle { display: none !important; }
         .sidebar-footer { display: none; }
-        .grid-item { cursor: default; }
-        .grid-item:hover { border-color: var(--border); box-shadow: none; }
+        .grid-item { 
+            cursor: default; 
+            background: transparent; 
+            border: none;
+        }
+        .grid-item:hover { border-color: transparent; box-shadow: none; }
+        .item-content { padding: 0; }
+        .grid { background: none !important; border: none !important; }
+        .grid-container { background: var(--bg) !important; }
     </style>
 </head>
 <body>

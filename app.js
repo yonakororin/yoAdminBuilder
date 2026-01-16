@@ -30,6 +30,7 @@ const modalBodyEl = document.getElementById('modal-body');
 
 // --- Grid Drag/Resize State ---
 let dragState = null;
+let currentEditComp = null; // For modal editing
 
 // ============================================================
 // INITIALIZATION
@@ -228,6 +229,72 @@ function syncCurrentTab() {
 }
 
 // ============================================================
+// HTML COMPONENT EDITOR
+// ============================================================
+function openHtmlEditor(comp) {
+    currentEditComp = comp;
+    modalTitleEl.textContent = 'Edit HTML Component';
+    modalBodyEl.innerHTML = `
+        <div class="html-editor-tabs">
+            <button class="html-tab active" data-mode="file">File Path</button>
+            <button class="html-tab" data-mode="direct">Direct Edit</button>
+        </div>
+        <div class="html-editor-content">
+            <div id="file-mode" class="editor-mode active">
+                <label>File Path:</label>
+                <input type="text" id="html-file-path" placeholder="e.g. components/widget.html" value="${comp.filePath || ''}">
+                <small>Relative path to HTML file</small>
+            </div>
+            <div id="direct-mode" class="editor-mode hidden">
+                <label>HTML Content:</label>
+                <textarea id="html-direct-content" rows="10" placeholder="&lt;div&gt;Your HTML...&lt;/div&gt;">${comp.content || ''}</textarea>
+            </div>
+        </div>
+    `;
+
+    // Tab switching
+    modalBodyEl.querySelectorAll('.html-tab').forEach(tab => {
+        tab.onclick = () => {
+            modalBodyEl.querySelectorAll('.html-tab').forEach(t => t.classList.remove('active'));
+            modalBodyEl.querySelectorAll('.editor-mode').forEach(m => m.classList.add('hidden'));
+            tab.classList.add('active');
+            document.getElementById(tab.dataset.mode + '-mode').classList.remove('hidden');
+        };
+    });
+
+    // Show correct mode based on existing data
+    if (comp.content && !comp.filePath) {
+        modalBodyEl.querySelector('[data-mode="direct"]').click();
+    }
+
+    modalEl.classList.remove('hidden');
+}
+
+function handleHtmlEditorConfirm() {
+    if (!currentEditComp) return;
+
+    const filePath = document.getElementById('html-file-path')?.value?.trim();
+    const directContent = document.getElementById('html-direct-content')?.value;
+
+    if (filePath) {
+        currentEditComp.filePath = filePath;
+        currentEditComp.content = null; // Clear direct content if using file
+    } else if (directContent) {
+        currentEditComp.content = directContent;
+        currentEditComp.filePath = null; // Clear file path if using direct
+    }
+
+    currentEditComp = null;
+    closeModal();
+    renderGrid();
+}
+
+function closeModal() {
+    modalEl.classList.add('hidden');
+    currentEditComp = null;
+}
+
+// ============================================================
 // EVENT LISTENERS
 // ============================================================
 function setupEventListeners() {
@@ -348,6 +415,7 @@ function setupEventListeners() {
     // Modal close
     document.getElementById('modal-close').addEventListener('click', closeModal);
     document.getElementById('modal-cancel').addEventListener('click', closeModal);
+    document.getElementById('modal-confirm').addEventListener('click', handleHtmlEditorConfirm);
 
     // Toolbox Toggle
     document.getElementById('toolbox-toggle').addEventListener('click', () => {
@@ -469,13 +537,19 @@ function setupGridInteraction() {
         const item = e.target.closest('.grid-item');
         if (!item) return;
 
-        // Edit Label
+        // Edit Label or HTML Content
         if (e.target.classList.contains('item-edit')) {
             e.stopPropagation();
             const compId = item.dataset.id;
             const tab = getTab();
             const comp = tab.components.find(c => c.id === compId);
-            if (comp) {
+            if (!comp) return;
+
+            if (comp.type === 'html') {
+                // Open HTML editor modal
+                openHtmlEditor(comp);
+            } else {
+                // Simple label edit for other types
                 const newLabel = prompt('Edit label:', comp.label);
                 if (newLabel && newLabel.trim() !== '') {
                     comp.label = newLabel.trim();
