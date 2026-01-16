@@ -141,12 +141,53 @@ function createGridItem(comp) {
     el.style.gridRowStart = (comp.y || 0) + 1;
     el.style.gridRowEnd = (comp.y || 0) + 1 + (comp.h || 2);
 
+    // Generate component-specific content
+    const contentHtml = getComponentContent(comp);
+
     el.innerHTML = `
-        <div class="item-header"><i class="fa-solid fa-grip-lines"></i></div>
-        <div class="item-content">${comp.label || comp.type || 'Widget'}</div>
+        <div class="item-header">
+            <i class="fa-solid fa-grip-lines"></i>
+            <i class="fa-solid fa-pen item-edit" title="Edit Label"></i>
+            <i class="fa-solid fa-trash item-delete" title="Delete"></i>
+        </div>
+        <div class="item-content">${contentHtml}</div>
         <div class="resize-handle"></div>
     `;
     return el;
+}
+
+function getComponentContent(comp) {
+    const label = comp.label || 'Label';
+    const pos = comp.labelPosition || 'left'; // 'left' or 'right'
+    const flexClass = pos === 'right' ? 'label-right' : 'label-left';
+
+    switch (comp.type) {
+        case 'checkbox':
+            return pos === 'right'
+                ? `<label class="comp-checkbox ${flexClass}"><input type="checkbox"><span>${label}</span></label>`
+                : `<label class="comp-checkbox ${flexClass}"><span>${label}</span><input type="checkbox"></label>`;
+        case 'toggle':
+            return pos === 'right'
+                ? `<label class="comp-toggle ${flexClass}"><input type="checkbox" class="toggle-input"><span class="toggle-slider"></span><span>${label}</span></label>`
+                : `<label class="comp-toggle ${flexClass}"><span>${label}</span><input type="checkbox" class="toggle-input"><span class="toggle-slider"></span></label>`;
+        case 'input':
+            return pos === 'right'
+                ? `<label class="comp-input ${flexClass}"><input type="text" placeholder="..."><span>${label}</span></label>`
+                : `<label class="comp-input ${flexClass}"><span>${label}</span><input type="text" placeholder="..."></label>`;
+        case 'button':
+            return `<button class="comp-button">${label}</button>`;
+        case 'datepicker':
+            const inputType = comp.includeTime ? 'datetime-local' : 'date';
+            return pos === 'right'
+                ? `<label class="comp-datepicker ${flexClass}"><input type="${inputType}"><span>${label}</span></label>`
+                : `<label class="comp-datepicker ${flexClass}"><span>${label}</span><input type="${inputType}"></label>`;
+        case 'form':
+            return `<div class="comp-form"><span>${label}</span></div>`;
+        case 'html':
+            return `<div class="comp-html">${comp.content || '<em>HTML/JS</em>'}</div>`;
+        default:
+            return `<span>${label}</span>`;
+    }
 }
 
 // ============================================================
@@ -389,13 +430,25 @@ function setupToolboxDnD() {
         const y = Math.floor((e.clientY - rect.top) / cellH);
         console.log('Calculated position:', x, y);
 
+        // Component-specific defaults
+        const typeLabels = {
+            html: 'HTML/JS',
+            button: 'Button',
+            form: 'Form',
+            checkbox: 'Checkbox',
+            toggle: 'Toggle',
+            input: 'Input',
+            datepicker: 'Calendar'
+        };
+
         const newComp = {
             id: 'comp-' + Date.now(),
             type,
-            label: type.charAt(0).toUpperCase() + type.slice(1),
+            label: typeLabels[type] || type,
+            labelPosition: 'left', // 'left' or 'right'
             x: Math.max(0, Math.min(x, 8)), // Keep in bounds
             y: Math.max(0, y),
-            w: 4,
+            w: (type === 'checkbox' || type === 'toggle') ? 3 : 4,
             h: 2
         };
         tab.components.push(newComp);
@@ -415,6 +468,34 @@ function setupGridInteraction() {
     gridEl.addEventListener('mousedown', e => {
         const item = e.target.closest('.grid-item');
         if (!item) return;
+
+        // Edit Label
+        if (e.target.classList.contains('item-edit')) {
+            e.stopPropagation();
+            const compId = item.dataset.id;
+            const tab = getTab();
+            const comp = tab.components.find(c => c.id === compId);
+            if (comp) {
+                const newLabel = prompt('Edit label:', comp.label);
+                if (newLabel && newLabel.trim() !== '') {
+                    comp.label = newLabel.trim();
+                    renderGrid();
+                }
+            }
+            return;
+        }
+
+        // Delete Component
+        if (e.target.classList.contains('item-delete')) {
+            e.stopPropagation();
+            const compId = item.dataset.id;
+            const tab = getTab();
+            if (confirm('Delete this component?')) {
+                tab.components = tab.components.filter(c => c.id !== compId);
+                renderGrid();
+            }
+            return;
+        }
 
         const isResize = e.target.classList.contains('resize-handle');
         const isHeader = e.target.closest('.item-header');

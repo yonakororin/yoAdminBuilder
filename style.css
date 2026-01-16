@@ -365,11 +365,144 @@ body {
     color: white;
 }
 
+.item-edit,
+.item-delete {
+    opacity: 0;
+    margin-left: 4px;
+    cursor: pointer;
+    transition: opacity 0.2s, color 0.2s;
+    padding: 4px 6px;
+    font-size: 11px;
+    border-radius: 3px;
+}
+
+.item-edit:first-of-type {
+    margin-left: auto;
+}
+
+.item-header:hover .item-edit,
+.item-header:hover .item-delete {
+    opacity: 1;
+}
+
+.item-edit:hover {
+    color: #fbbf24;
+}
+
+.item-delete:hover {
+    color: #ef4444;
+}
+
 .item-content {
     flex: 1;
     padding: 0.5rem;
     font-size: 0.8rem;
     overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+}
+
+/* Component Styles */
+.comp-checkbox,
+.comp-toggle,
+.comp-input,
+.comp-datepicker {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 0.5rem;
+    width: 100%;
+    margin: auto 0;
+    /* Vertical center in parent */
+}
+
+.comp-checkbox span,
+.comp-toggle span,
+.comp-input span,
+.comp-datepicker span {
+    display: inline-flex;
+    align-items: center;
+    white-space: nowrap;
+    line-height: 1;
+}
+
+.comp-checkbox input,
+.comp-input input,
+.comp-datepicker input {
+    accent-color: var(--primary);
+}
+
+.comp-input input,
+.comp-datepicker input {
+    flex: 1;
+    padding: 0.3rem 0.5rem;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text);
+    font-size: 0.75rem;
+}
+
+.comp-button {
+    padding: 0.4rem 1rem;
+    background: var(--primary);
+    border: none;
+    border-radius: 4px;
+    color: white;
+    cursor: pointer;
+    font-size: 0.8rem;
+}
+
+.comp-button:hover {
+    background: #2563eb;
+}
+
+/* Toggle Switch */
+.comp-toggle {
+    position: relative;
+}
+
+.toggle-input {
+    display: none;
+}
+
+.toggle-slider {
+    width: 36px;
+    height: 20px;
+    background: var(--border);
+    border-radius: 10px;
+    position: relative;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.toggle-slider::after {
+    content: '';
+    position: absolute;
+    left: 2px;
+    top: 2px;
+    width: 16px;
+    height: 16px;
+    background: white;
+    border-radius: 50%;
+    transition: transform 0.2s;
+}
+
+.toggle-input:checked+.toggle-slider {
+    background: var(--primary);
+}
+
+.toggle-input:checked+.toggle-slider::after {
+    transform: translateX(16px);
+}
+
+.comp-html,
+.comp-form {
+    width: 100%;
+    color: var(--text-muted);
+    font-style: italic;
 }
 
 .resize-handle {

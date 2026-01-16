@@ -59,6 +59,10 @@
                     <div class="tool" data-type="html" draggable="true"><i class="fa-brands fa-html5"></i> HTML/JS</div>
                     <div class="tool" data-type="button" draggable="true"><i class="fa-solid fa-play"></i> Button</div>
                     <div class="tool" data-type="form" draggable="true"><i class="fa-solid fa-align-left"></i> Form</div>
+                    <div class="tool" data-type="checkbox" draggable="true"><i class="fa-regular fa-square-check"></i> Checkbox</div>
+                    <div class="tool" data-type="toggle" draggable="true"><i class="fa-solid fa-toggle-on"></i> Toggle</div>
+                    <div class="tool" data-type="input" draggable="true"><i class="fa-solid fa-keyboard"></i> Input</div>
+                    <div class="tool" data-type="datepicker" draggable="true"><i class="fa-solid fa-calendar"></i> Calendar</div>
                 </div>
             </div>
         </main>

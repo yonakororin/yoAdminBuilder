@@ -103,9 +103,43 @@
             const g = document.getElementById('grid');
             g.innerHTML = (t?.components || []).map(c => `
                 <div class="grid-item" style="grid-column:${(c.x||0)+1}/span ${c.w||4};grid-row:${(c.y||0)+1}/span ${c.h||2}">
-                    <div class="item-content">${c.content || ''}</div>
+                    <div class="item-content">${getComponentContent(c)}</div>
                 </div>
             `).join('');
+        }
+        
+        function getComponentContent(comp) {
+            const label = comp.label || 'Label';
+            const pos = comp.labelPosition || 'left';
+            const flexClass = pos === 'right' ? 'label-right' : 'label-left';
+            
+            switch(comp.type) {
+                case 'checkbox':
+                    return pos === 'right' 
+                        ? `<label class="comp-checkbox ${flexClass}"><input type="checkbox"><span>${label}</span></label>`
+                        : `<label class="comp-checkbox ${flexClass}"><span>${label}</span><input type="checkbox"></label>`;
+                case 'toggle':
+                    return pos === 'right'
+                        ? `<label class="comp-toggle ${flexClass}"><input type="checkbox" class="toggle-input"><span class="toggle-slider"></span><span>${label}</span></label>`
+                        : `<label class="comp-toggle ${flexClass}"><span>${label}</span><input type="checkbox" class="toggle-input"><span class="toggle-slider"></span></label>`;
+                case 'input':
+                    return pos === 'right'
+                        ? `<label class="comp-input ${flexClass}"><input type="text" placeholder="..."><span>${label}</span></label>`
+                        : `<label class="comp-input ${flexClass}"><span>${label}</span><input type="text" placeholder="..."></label>`;
+                case 'button':
+                    return `<button class="comp-button">${label}</button>`;
+                case 'datepicker':
+                    const inputType = comp.includeTime ? 'datetime-local' : 'date';
+                    return pos === 'right'
+                        ? `<label class="comp-datepicker ${flexClass}"><input type="${inputType}"><span>${label}</span></label>`
+                        : `<label class="comp-datepicker ${flexClass}"><span>${label}</span><input type="${inputType}"></label>`;
+                case 'form':
+                    return `<div class="comp-form"><span>${label}</span></div>`;
+                case 'html':
+                    return `<div class="comp-html">${comp.content || ''}</div>`;
+                default:
+                    return `<span>${label}</span>`;
+            }
         }
 
         init();
