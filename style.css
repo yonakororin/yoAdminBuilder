@@ -1,11 +1,12 @@
 :root {
-    --bg: #0f172a;
-    --bg-card: #1e293b;
-    --bg-hover: #334155;
-    --border: #334155;
-    --primary: #3b82f6;
-    --text: #f8fafc;
-    --text-muted: #94a3b8;
+    /* Use shared theme variables, fallback to defaults */
+    --bg: var(--theme-bg, #0f172a);
+    --bg-card: var(--theme-bg-card, #1e293b);
+    --bg-hover: var(--theme-bg-hover, #334155);
+    --border: var(--theme-border, #334155);
+    --primary: var(--theme-primary, #3b82f6);
+    --text: var(--theme-text, #f8fafc);
+    --text-muted: var(--theme-text-muted, #94a3b8);
     --grid-cols: 48;
     --cell-h: 20px;
     --gap: 2px;
@@ -50,6 +51,9 @@ body {
     font-size: 1.2rem;
     font-weight: 600;
     border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 
 .btn-add {

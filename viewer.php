@@ -7,11 +7,15 @@
     <title>yoAdmin Viewer</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../shared/theme.css">
     <link rel="stylesheet" href="style.css">
     <style>
         /* Viewer overrides - hide edit controls */
         .btn-add, .add-sub, .icon-btn, .toolbox, .item-header, .resize-handle { display: none !important; }
-        .sidebar-footer { display: none; }
+        .sidebar { min-width: 220px !important; }
+        /* Hide file controls and save button in footer, but keep footer itself for theme/logout */
+        .file-controls, #save-btn { display: none !important; }
+        .sidebar-footer { display: block; border-top: none; }
         .grid-item { 
             cursor: default; 
             background: transparent; 
@@ -26,8 +30,30 @@
 <body>
     <div id="app">
         <aside class="sidebar">
-            <div class="brand"><i class="fa-solid fa-shapes"></i> yoAdmin</div>
+            <div class="brand">
+                <i class="fa-solid fa-shapes"></i> yoAdmin
+            </div>
             <div id="menu-tree" class="menu-tree"></div>
+            <div class="sidebar-footer">
+                <div class="theme-selector" style="margin-bottom:0.5rem;">
+                    <label style="font-size:0.75rem;color:var(--text-muted);margin-right:0.5rem;">Theme:</label>
+                    <select title="Theme">
+                        <option value="dark">🌙 Dark</option>
+                        <option value="light">☀️ Light</option>
+                        <option value="midnight">🔮 Midnight</option>
+                        <option value="ocean">🌊 Ocean</option>
+                        <option value="forest">🌲 Forest</option>
+                        <option value="sunset">🌅 Sunset</option>
+                        <option value="mono">⬜ Mono</option>
+                        <option value="rose">🌸 Rose</option>
+                    </select>
+                </div>
+                <div style="margin-top: 10px; text-align: center; border-top: 1px solid var(--border); padding-top: 10px;">
+                    <a href="logout.php" style="color: var(--text-muted); font-size: 0.8rem; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 5px;">
+                        <i class="fa-solid fa-sign-out-alt"></i> Logout
+                    </a>
+                </div>
+            </div>
         </aside>
         <main class="main">
             <header class="header">
@@ -170,5 +196,7 @@
 
         init();
     </script>
+    <script>window.currentUser = "<?= isset($_SESSION['user']) ? htmlspecialchars($_SESSION['user']) : '' ?>";</script>
+    <script src="../shared/theme.js"></script>
 </body>
 </html>

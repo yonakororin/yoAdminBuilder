@@ -9,6 +9,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../shared/theme.css">
     <link rel="stylesheet" href="style.css">
     <!-- CodeMirror -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
@@ -30,16 +31,36 @@
     <div id="app">
         <!-- Sidebar -->
         <aside class="sidebar">
-            <div class="brand"><i class="fa-solid fa-shapes"></i> yoAdmin</div>
+            <div class="brand">
+                <i class="fa-solid fa-shapes"></i> yoAdmin
+            </div>
             <button id="add-menu-btn" class="btn-add"><i class="fa-solid fa-plus"></i> Add Menu</button>
             <div id="menu-tree" class="menu-tree"></div>
             <div class="sidebar-footer">
+                <div class="theme-selector" style="margin-bottom:0.5rem;">
+                    <label style="font-size:0.75rem;color:var(--text-muted);margin-right:0.5rem;">Theme:</label>
+                    <select title="Theme">
+                        <option value="dark">🌙 Dark</option>
+                        <option value="light">☀️ Light</option>
+                        <option value="midnight">🔮 Midnight</option>
+                        <option value="ocean">🌊 Ocean</option>
+                        <option value="forest">🌲 Forest</option>
+                        <option value="sunset">🌅 Sunset</option>
+                        <option value="mono">⬜ Mono</option>
+                        <option value="rose">🌸 Rose</option>
+                    </select>
+                </div>
                 <div class="file-controls">
                     <label>Config File:</label>
                     <input type="text" id="file-input" value="admin_config.json" placeholder="filename.json">
                     <button id="load-btn" class="btn-sm">Load</button>
                 </div>
                 <button id="save-btn" class="btn-primary"><i class="fa-solid fa-save"></i> Save</button>
+                <div style="margin-top: 10px; text-align: center; border-top: 1px solid var(--border); padding-top: 10px;">
+                    <a href="logout.php" style="color: var(--text-muted); font-size: 0.8rem; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 5px;">
+                        <i class="fa-solid fa-sign-out-alt"></i> Logout
+                    </a>
+                </div>
             </div>
         </aside>
 
@@ -95,6 +116,8 @@
         </div>
     </div>
 
+    <script>window.currentUser = "<?= isset($_SESSION['user']) ? htmlspecialchars($_SESSION['user']) : '' ?>";</script>
+    <script src="../shared/theme.js"></script>
     <script src="app.js"></script>
 </body>
 </html>

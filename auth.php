@@ -2,68 +2,51 @@
 session_start();
 
 // Configuration
-// Using relative path for SSO URL to support flexible deployments (Nginx/Apache under a subpath)
-// Assumes yoSSO is a sibling directory.
 $sso_url = '../yoSSO/';
-$sso_path = __DIR__ . '/../yoSSO'; // Path to yoSSO directory on disk
-$codes_file = $sso_path . '/data/codes.json';
 
-function get_current_url() {
+function get_current_base_url() {
     $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' || $_SERVER['SERVER_PORT'] == 443) ? "https://" : "http://";
     $host = $_SERVER['HTTP_HOST'];
-    $uri = $_SERVER['REQUEST_URI'];
-    return $protocol . $host . $uri;
+    $path = dirname($_SERVER['SCRIPT_NAME']);
+    $path = str_replace('\\', '/', $path);
+    $path = rtrim($path, '/');
+    return $protocol . $host . $path;
 }
 
-// 1. Check if already logged in
-if (isset($_SESSION['yo_user'])) {
-    return; // Authenticated
+$base_url = get_current_base_url();
+
+// 1. Check if already logged in (unified session key 'user')
+if (!isset($_SESSION['user'])) {
+    // Redirect to SSO
+    $redirect_uri = urlencode("$base_url/callback.php");
+    header("Location: $sso_url?redirect_uri=$redirect_uri");
+    exit;
 }
 
-// 2. Check for SSO Code
-if (isset($_GET['code'])) {
-    $code = $_GET['code'];
-    
-    // Validate code directly against file system to avoid HTTP request complexity
-    // Validate code directly against file system
-    if (file_exists($codes_file)) {
-        $codes = json_decode(file_get_contents($codes_file), true);
-        
-        if (isset($codes[$code])) {
-            $data = $codes[$code];
-            if ($data['expires_at'] > time()) {
-                // Valid!
-                $_SESSION['yo_user'] = $data['username'];
-                
-                // Invalidate code (cleanup)
-                unset($codes[$code]);
-                file_put_contents($codes_file, json_encode($codes));
-                
-                // Redirect clean
-                $parts = parse_url(get_current_url());
-                parse_str($parts['query'] ?? '', $query);
-                unset($query['code']);
-                $new_query = http_build_query($query);
-                $target = $parts['path'] . ($new_query ? '?' . $new_query : '');
-                
-                header("Location: " . $target);
-                exit;
-            } else {
-                echo "Code expired. <a href='$sso_url'>Login again</a>";
-                exit;
-            }
-        } else {
-            echo "Invalid code. <a href='$sso_url'>Login again</a>";
-            exit;
-        }
-    } else {
-        echo "Error: Codes file not accessible at $codes_file";
+// 1.5 Check Session Timeout (12 hours = 43200 seconds)
+$timeout_duration = 12 * 60 * 60;
+if (isset($_SESSION['login_time'])) {
+    if ((time() - $_SESSION['login_time']) > $timeout_duration) {
+        // Session expired
+        session_destroy();
+        $redirect_uri = urlencode("$base_url/callback.php");
+        header("Location: $sso_url?redirect_uri=$redirect_uri");
         exit;
     }
+} else {
+    // If login_time is missing (old session), set it now or force relogin?
+    // Let's set it now to avoid immediate logout for existing users, 
+    // effectively starting the 12h timer from now.
+    $_SESSION['login_time'] = time();
 }
 
-// 3. Not valid or no code -> Redirect to SSO
-$redirect_uri = urlencode(get_current_url());
-header("Location: $sso_url?redirect_uri=$redirect_uri");
-exit;
+// Debug: Check session if requested
+if (isset($_GET['debug_session'])) {
+    echo "<pre>";
+    print_r($_SESSION);
+    echo "</pre>";
+    exit;
+}
+
+// Authenticated - script execution continues in the file that required this
 ?>
