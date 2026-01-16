@@ -501,8 +501,10 @@ body {
 .comp-html,
 .comp-form {
     width: 100%;
-    color: var(--text-muted);
-    font-style: italic;
+    height: 100%;
+    color: var(--text);
+    align-self: flex-start;
+    text-align: left;
 }
 
 .resize-handle {
@@ -755,4 +757,22 @@ label {
     color: var(--text-muted);
     font-size: 0.75rem;
     margin-top: -0.5rem;
+}
+
+/* Settings Modal */
+.settings-group {
+    margin-bottom: 1rem;
+}
+
+.settings-group label {
+    margin-bottom: 0.25rem;
+}
+
+.settings-group select {
+    width: 100%;
+    padding: 0.5rem;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 4px;
 }

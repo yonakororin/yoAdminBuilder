@@ -108,11 +108,14 @@
             const s = getSubmenu();
             const t = s?.tabs?.find(x => x.id === state.activeTabId);
             const g = document.getElementById('grid');
-            g.innerHTML = (t?.components || []).map(c => `
-                <div class="grid-item" style="grid-column:${(c.x||0)+1}/span ${c.w||4};grid-row:${(c.y||0)+1}/span ${c.h||2}">
+            g.innerHTML = (t?.components || []).map(c => {
+                const customId = c.customId ? `id="${c.customId}"` : '';
+                const customClass = c.customClass ? c.customClass : '';
+                return `
+                <div class="grid-item ${customClass}" ${customId} style="grid-column:${(c.x||0)+1}/span ${c.w||4};grid-row:${(c.y||0)+1}/span ${c.h||2}">
                     <div class="item-content">${getComponentContent(c)}</div>
                 </div>
-            `).join('');
+            `}).join('');
         }
         
         function getComponentContent(comp) {

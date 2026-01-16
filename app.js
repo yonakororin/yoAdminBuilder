@@ -31,6 +31,7 @@ const modalBodyEl = document.getElementById('modal-body');
 // --- Grid Drag/Resize State ---
 let dragState = null;
 let currentEditComp = null; // For modal editing
+let codeMirrorInstance = null; // CodeMirror editor instance
 
 // ============================================================
 // INITIALIZATION
@@ -290,8 +291,161 @@ function handleHtmlEditorConfirm() {
 }
 
 function closeModal() {
+    // Destroy CodeMirror instance if exists
+    if (codeMirrorInstance) {
+        codeMirrorInstance.toTextArea();
+        codeMirrorInstance = null;
+    }
     modalEl.classList.add('hidden');
     currentEditComp = null;
+}
+
+function openComponentSettings(comp) {
+    currentEditComp = comp;
+    modalTitleEl.textContent = 'Component Settings';
+
+    // Base fields for all components
+    let html = `
+        <div class="settings-group">
+            <label>ID (for JavaScript):</label>
+            <input type="text" id="comp-custom-id" placeholder="e.g. myCheckbox" value="${comp.customId || ''}">
+        </div>
+        <div class="settings-group">
+            <label>Class (CSS classes):</label>
+            <input type="text" id="comp-custom-class" placeholder="e.g. my-class another-class" value="${comp.customClass || ''}">
+        </div>
+        <div class="settings-group">
+            <label>Label:</label>
+            <input type="text" id="comp-label" value="${comp.label || ''}">
+        </div>
+    `;
+
+    // HTML-specific fields
+    if (comp.type === 'html') {
+        html += `
+            <div class="settings-group">
+                <label>Source:</label>
+                <div class="html-editor-tabs">
+                    <button class="html-tab ${!comp.content ? 'active' : ''}" data-mode="file">File Path</button>
+                    <button class="html-tab ${comp.content ? 'active' : ''}" data-mode="direct">Direct Edit</button>
+                </div>
+            </div>
+            <div id="file-mode" class="editor-mode ${!comp.content ? '' : 'hidden'}">
+                <label>File Path:</label>
+                <input type="text" id="html-file-path" placeholder="components/widget.html" value="${comp.filePath || ''}">
+            </div>
+            <div id="direct-mode" class="editor-mode ${comp.content ? '' : 'hidden'}">
+                <label>HTML Content:</label>
+                <textarea id="html-direct-content" rows="8">${comp.content || ''}</textarea>
+            </div>
+        `;
+    }
+
+    // DatePicker specific
+    if (comp.type === 'datepicker') {
+        html += `
+            <div class="settings-group">
+                <label><input type="checkbox" id="comp-include-time" ${comp.includeTime ? 'checked' : ''}> Include time</label>
+            </div>
+        `;
+    }
+
+    // Label position for labeled components
+    if (['checkbox', 'toggle', 'input', 'datepicker'].includes(comp.type)) {
+        html += `
+            <div class="settings-group">
+                <label>Label Position:</label>
+                <select id="comp-label-position">
+                    <option value="left" ${comp.labelPosition === 'left' ? 'selected' : ''}>Left</option>
+                    <option value="right" ${comp.labelPosition === 'right' ? 'selected' : ''}>Right</option>
+                </select>
+            </div>
+        `;
+    }
+
+    modalBodyEl.innerHTML = html;
+
+    // Tab switching for HTML
+    modalBodyEl.querySelectorAll('.html-tab').forEach(tab => {
+        tab.onclick = () => {
+            modalBodyEl.querySelectorAll('.html-tab').forEach(t => t.classList.remove('active'));
+            modalBodyEl.querySelectorAll('.editor-mode').forEach(m => m.classList.add('hidden'));
+            tab.classList.add('active');
+            document.getElementById(tab.dataset.mode + '-mode')?.classList.remove('hidden');
+            // Refresh CodeMirror when direct tab is shown
+            if (tab.dataset.mode === 'direct' && codeMirrorInstance) {
+                setTimeout(() => codeMirrorInstance.refresh(), 10);
+            }
+        };
+    });
+
+    modalEl.classList.remove('hidden');
+
+    // Initialize CodeMirror for HTML type
+    if (comp.type === 'html') {
+        const textarea = document.getElementById('html-direct-content');
+        if (textarea && typeof CodeMirror !== 'undefined') {
+            codeMirrorInstance = CodeMirror.fromTextArea(textarea, {
+                mode: 'htmlmixed',
+                theme: 'dracula',
+                lineNumbers: true,
+                autoCloseTags: true,
+                autoCloseBrackets: true,
+                matchBrackets: true,
+                indentUnit: 2,
+                tabSize: 2,
+                lineWrapping: true,
+                extraKeys: {
+                    'Ctrl-Space': 'autocomplete',
+                    'Tab': function (cm) {
+                        cm.replaceSelection('  ', 'end');
+                    }
+                }
+            });
+            codeMirrorInstance.setSize('100%', '200px');
+            // Auto-show hints on input
+            codeMirrorInstance.on('inputRead', function (cm, change) {
+                if (change.text[0].match(/[<a-zA-Z]/)) {
+                    CodeMirror.commands.autocomplete(cm, null, { completeSingle: false });
+                }
+            });
+        }
+    }
+}
+
+function handleModalConfirm() {
+    if (!currentEditComp) return;
+
+    // Common fields
+    currentEditComp.customId = document.getElementById('comp-custom-id')?.value?.trim() || null;
+    currentEditComp.customClass = document.getElementById('comp-custom-class')?.value?.trim() || null;
+    currentEditComp.label = document.getElementById('comp-label')?.value?.trim() || currentEditComp.label;
+
+    // HTML specific
+    if (currentEditComp.type === 'html') {
+        const filePath = document.getElementById('html-file-path')?.value?.trim();
+        // Get content from CodeMirror if available, otherwise from textarea
+        const directContent = codeMirrorInstance ? codeMirrorInstance.getValue() : document.getElementById('html-direct-content')?.value;
+        if (filePath) {
+            currentEditComp.filePath = filePath;
+            currentEditComp.content = null;
+        } else if (directContent) {
+            currentEditComp.content = directContent;
+            currentEditComp.filePath = null;
+        }
+    }
+
+    // DatePicker specific
+    if (currentEditComp.type === 'datepicker') {
+        currentEditComp.includeTime = document.getElementById('comp-include-time')?.checked || false;
+    }
+
+    // Label position
+    const labelPos = document.getElementById('comp-label-position')?.value;
+    if (labelPos) currentEditComp.labelPosition = labelPos;
+
+    closeModal();
+    renderGrid();
 }
 
 // ============================================================
@@ -415,7 +569,7 @@ function setupEventListeners() {
     // Modal close
     document.getElementById('modal-close').addEventListener('click', closeModal);
     document.getElementById('modal-cancel').addEventListener('click', closeModal);
-    document.getElementById('modal-confirm').addEventListener('click', handleHtmlEditorConfirm);
+    document.getElementById('modal-confirm').addEventListener('click', handleModalConfirm);
 
     // Toolbox Toggle
     document.getElementById('toolbox-toggle').addEventListener('click', () => {
@@ -537,7 +691,7 @@ function setupGridInteraction() {
         const item = e.target.closest('.grid-item');
         if (!item) return;
 
-        // Edit Label or HTML Content
+        // Edit Component Settings
         if (e.target.classList.contains('item-edit')) {
             e.stopPropagation();
             const compId = item.dataset.id;
@@ -545,17 +699,7 @@ function setupGridInteraction() {
             const comp = tab.components.find(c => c.id === compId);
             if (!comp) return;
 
-            if (comp.type === 'html') {
-                // Open HTML editor modal
-                openHtmlEditor(comp);
-            } else {
-                // Simple label edit for other types
-                const newLabel = prompt('Edit label:', comp.label);
-                if (newLabel && newLabel.trim() !== '') {
-                    comp.label = newLabel.trim();
-                    renderGrid();
-                }
-            }
+            openComponentSettings(comp);
             return;
         }
 
