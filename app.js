@@ -492,8 +492,8 @@ function setupToolboxDnD() {
 
         // Calculate grid position
         const rect = gridEl.getBoundingClientRect();
-        const cellW = rect.width / 12;
-        const cellH = 44; // 40 + 4 gap
+        const cellW = rect.width / 48;
+        const cellH = 22; // 20 + 2 gap
         const x = Math.floor((e.clientX - rect.left) / cellW);
         const y = Math.floor((e.clientY - rect.top) / cellH);
         console.log('Calculated position:', x, y);
@@ -514,9 +514,9 @@ function setupToolboxDnD() {
             type,
             label: typeLabels[type] || type,
             labelPosition: 'left', // 'left' or 'right'
-            x: Math.max(0, Math.min(x, 8)), // Keep in bounds
+            x: Math.max(0, Math.min(x, 32)), // Keep in bounds (48 - 16)
             y: Math.max(0, y),
-            w: (type === 'checkbox' || type === 'toggle') ? 3 : 4,
+            w: (type === 'checkbox' || type === 'toggle') ? 12 : 16,
             h: 2
         };
         tab.components.push(newComp);
@@ -578,8 +578,8 @@ function setupGridInteraction() {
 
         e.preventDefault();
         const rect = gridEl.getBoundingClientRect();
-        const cellW = rect.width / 12;
-        const cellH = 44;
+        const cellW = rect.width / 48;
+        const cellH = 22;
 
         dragState = {
             item,
@@ -625,7 +625,7 @@ function setupGridInteraction() {
             if (newColEnd - origColStart < 2) newColEnd = origColStart + 2;
             if (newRowEnd - origRowStart < 1) newRowEnd = origRowStart + 1;
             // Max col
-            if (newColEnd > 13) newColEnd = 13;
+            if (newColEnd > 49) newColEnd = 49;
             ghost.style.gridColumnEnd = newColEnd;
             ghost.style.gridRowEnd = newRowEnd;
         } else {
@@ -636,7 +636,7 @@ function setupGridInteraction() {
             let newRowStart = origRowStart + dy;
             // Boundaries
             if (newColStart < 1) newColStart = 1;
-            if (newColStart + w > 13) newColStart = 13 - w;
+            if (newColStart + w > 49) newColStart = 49 - w;
             if (newRowStart < 1) newRowStart = 1;
 
             ghost.style.gridColumnStart = newColStart;
