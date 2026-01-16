@@ -116,6 +116,22 @@
                     <div class="item-content">${getComponentContent(c)}</div>
                 </div>
             `}).join('');
+            
+            // Execute scripts in HTML components
+            executeScripts(g);
+        }
+        
+        function executeScripts(container) {
+            const scripts = container.querySelectorAll('script');
+            scripts.forEach(oldScript => {
+                const newScript = document.createElement('script');
+                if (oldScript.src) {
+                    newScript.src = oldScript.src;
+                } else {
+                    newScript.textContent = oldScript.textContent;
+                }
+                oldScript.parentNode.replaceChild(newScript, oldScript);
+            });
         }
         
         function getComponentContent(comp) {
