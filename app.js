@@ -21,7 +21,6 @@ const gridEl = document.getElementById('grid');
 const breadcrumbsEl = document.getElementById('breadcrumbs');
 const emptyStateEl = document.getElementById('empty-state');
 const workspaceEl = document.getElementById('workspace');
-const toolboxEl = document.getElementById('toolbox');
 const fileInputEl = document.getElementById('file-input');
 
 // Modal
@@ -94,7 +93,9 @@ async function loadConfigFile(filename) {
     // Reset UI to empty state
     emptyStateEl.classList.remove('hidden');
     workspaceEl.classList.add('hidden');
-    toolboxEl.classList.add('hidden');
+    // Hide tools menu when exiting workspace
+    const toolsMenu = document.getElementById('tools-menu');
+    if (toolsMenu) toolsMenu.classList.add('hidden');
     breadcrumbsEl.textContent = 'Select a submenu';
 }
 
@@ -1071,9 +1072,20 @@ function setupEventListeners() {
     document.getElementById('modal-cancel').addEventListener('click', closeModal);
     document.getElementById('modal-confirm').addEventListener('click', handleModalConfirm);
 
-    // Toolbox Toggle
-    document.getElementById('toolbox-toggle').addEventListener('click', () => {
-        document.getElementById('toolbox').classList.toggle('collapsed');
+    // Header Tools Button Toggle (dropdown)
+    document.getElementById('header-tools-btn')?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        document.getElementById('tools-dropdown')?.classList.toggle('show');
+        document.getElementById('header-tools-btn')?.classList.toggle('active',
+            document.getElementById('tools-dropdown')?.classList.contains('show'));
+    });
+
+    // Close tools dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.tools-menu')) {
+            document.getElementById('tools-dropdown')?.classList.remove('show');
+            document.getElementById('header-tools-btn')?.classList.remove('active');
+        }
     });
 
     // Grid Drag & Drop from Toolbox
@@ -1086,7 +1098,9 @@ function setupEventListeners() {
 function showWorkspace() {
     emptyStateEl.classList.add('hidden');
     workspaceEl.classList.remove('hidden');
-    toolboxEl.classList.remove('hidden');
+    // Show header tools menu
+    const toolsMenu = document.getElementById('tools-menu');
+    if (toolsMenu) toolsMenu.classList.remove('hidden');
     const menu = state.config.find(m => m.id === state.selectedMenuId);
     const sub = getSubmenu();
 

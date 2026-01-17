@@ -34,14 +34,6 @@
                 <a href="index.php" style="color:inherit;text-decoration:none;"><i class="fa-solid fa-shapes"></i> yoAdmin</a>
             </div>
             <div id="menu-tree" class="menu-tree"></div>
-            <div class="sidebar-footer">
-                <!-- Help Button -->
-                <div style="margin-top: 10px; text-align: center;">
-                    <button onclick="openHelp()" style="background:none;border:none;color:var(--primary);cursor:pointer;font-size:0.8rem;text-decoration:underline;">
-                        <i class="fa-regular fa-circle-question"></i> Help / Guide
-                    </button>
-                </div>
-            </div>
         </aside>
         <main class="main">
             <header class="header">

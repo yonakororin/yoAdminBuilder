@@ -369,6 +369,85 @@ body {
     font-size: 0.8rem;
 }
 
+/* Header Right Container */
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.header-tools-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.4rem 0.8rem;
+    background: var(--bg-hover);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text);
+    cursor: pointer;
+    font-size: 0.85rem;
+}
+
+.header-tools-btn:hover {
+    background: var(--bg-card);
+    border-color: var(--primary);
+}
+
+.header-tools-btn.active {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+}
+
+/* Tools Menu Dropdown */
+.tools-menu {
+    position: relative;
+}
+
+.tools-dropdown {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 0.5rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    min-width: 150px;
+    z-index: 1000;
+    display: none;
+}
+
+.tools-dropdown.show {
+    display: block;
+}
+
+.tools-dropdown .tool {
+    padding: 0.5rem 0.75rem;
+    cursor: grab;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+    color: var(--text);
+    border-bottom: 1px solid var(--border);
+}
+
+.tools-dropdown .tool:last-child {
+    border-bottom: none;
+}
+
+.tools-dropdown .tool:hover {
+    background: var(--bg-hover);
+}
+
+.tools-dropdown .tool i {
+    width: 18px;
+    text-align: center;
+    color: var(--primary);
+}
+
 /* Empty State */
 .empty-state {
     flex: 1;
@@ -775,9 +854,9 @@ body {
 .toolbox {
     position: absolute;
     right: 10px;
-    top: 6px;
+    top: 56px;
     width: 140px;
-    max-height: calc(100% - 20px);
+    max-height: calc(100% - 70px);
     display: flex;
     flex-direction: column;
     background: var(--bg-card);

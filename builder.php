@@ -59,31 +59,52 @@
         <main class="main">
             <header class="header">
                 <div id="breadcrumbs" class="breadcrumbs">Select a submenu</div>
-                <div class="user-menu">
-                    <button class="user-menu-btn" id="user-menu-btn">
-                        <i class="fa-solid fa-user-circle"></i>
-                        <span><?= htmlspecialchars($_SESSION['user'] ?? 'User') ?></span>
-                        <i class="fa-solid fa-chevron-down" style="font-size:0.6rem;"></i>
-                    </button>
-                    <div class="user-menu-dropdown" id="user-menu-dropdown">
-                        <div class="user-menu-item theme-select">
-                            <i class="fa-solid fa-palette"></i>
-                            <span>Theme:</span>
-                            <select id="theme-select" title="Theme">
-                                <option value="dark">🌙 Dark</option>
-                                <option value="light">☀️ Light</option>
-                                <option value="midnight">🔮 Midnight</option>
-                                <option value="ocean">🌊 Ocean</option>
-                                <option value="forest">🌲 Forest</option>
-                                <option value="sunset">🌅 Sunset</option>
-                                <option value="mono">⬜ Mono</option>
-                                <option value="rose">🌸 Rose</option>
-                            </select>
+                <div class="header-right">
+                    <div class="tools-menu hidden" id="tools-menu">
+                        <button class="header-tools-btn" id="header-tools-btn">
+                            <i class="fa-solid fa-toolbox"></i> Tools
+                            <i class="fa-solid fa-chevron-down" style="font-size:0.6rem;"></i>
+                        </button>
+                        <div class="tools-dropdown" id="tools-dropdown">
+                            <div class="tool" data-type="html" draggable="true"><i class="fa-brands fa-html5"></i> HTML/JS</div>
+                            <div class="tool" data-type="button" draggable="true"><i class="fa-solid fa-play"></i> Button</div>
+                            <div class="tool" data-type="form" draggable="true"><i class="fa-solid fa-align-left"></i> Form</div>
+                            <div class="tool" data-type="checkbox" draggable="true"><i class="fa-regular fa-square-check"></i> Checkbox</div>
+                            <div class="tool" data-type="toggle" draggable="true"><i class="fa-solid fa-toggle-on"></i> Toggle</div>
+                            <div class="tool" data-type="checklist" draggable="true"><i class="fa-solid fa-list-check"></i> Checklist</div>
+                            <div class="tool" data-type="input" draggable="true"><i class="fa-solid fa-keyboard"></i> Input</div>
+                            <div class="tool" data-type="datepicker" draggable="true"><i class="fa-solid fa-calendar"></i> Calendar</div>
+                            <div class="tool" data-type="modal" draggable="true"><i class="fa-regular fa-window-restore"></i> Modal</div>
+                            <div class="tool" data-type="loading" draggable="true"><i class="fa-solid fa-spinner"></i> Loading</div>
+                            <div class="tool" data-type="table" draggable="true"><i class="fa-solid fa-table"></i> Table</div>
                         </div>
-                        <a href="logout.php" class="user-menu-item">
-                            <i class="fa-solid fa-sign-out-alt"></i>
-                            <span>Logout</span>
-                        </a>
+                    </div>
+                    <div class="user-menu">
+                        <button class="user-menu-btn" id="user-menu-btn">
+                            <i class="fa-solid fa-user-circle"></i>
+                            <span><?= htmlspecialchars($_SESSION['user'] ?? 'User') ?></span>
+                            <i class="fa-solid fa-chevron-down" style="font-size:0.6rem;"></i>
+                        </button>
+                        <div class="user-menu-dropdown" id="user-menu-dropdown">
+                            <div class="user-menu-item theme-select">
+                                <i class="fa-solid fa-palette"></i>
+                                <span>Theme:</span>
+                                <select id="theme-select" title="Theme">
+                                    <option value="dark">🌙 Dark</option>
+                                    <option value="light">☀️ Light</option>
+                                    <option value="midnight">🔮 Midnight</option>
+                                    <option value="ocean">🌊 Ocean</option>
+                                    <option value="forest">🌲 Forest</option>
+                                    <option value="sunset">🌅 Sunset</option>
+                                    <option value="mono">⬜ Mono</option>
+                                    <option value="rose">🌸 Rose</option>
+                                </select>
+                            </div>
+                            <a href="logout.php" class="user-menu-item">
+                                <i class="fa-solid fa-sign-out-alt"></i>
+                                <span>Logout</span>
+                            </a>
+                        </div>
                     </div>
                 </div>
             </header>
@@ -100,27 +121,6 @@
                 </div>
                 <div id="grid-container" class="grid-container">
                     <div id="grid" class="grid"></div>
-                </div>
-            </div>
-
-            <!-- Toolbox -->
-            <div id="toolbox" class="toolbox hidden collapsed">
-                <div class="toolbox-header" id="toolbox-toggle">
-                    <span><i class="fa-solid fa-toolbox"></i> Tools</span>
-                    <i class="fa-solid fa-chevron-down caret"></i>
-                </div>
-                <div class="toolbox-content">
-                    <div class="tool" data-type="html" draggable="true"><i class="fa-brands fa-html5"></i> HTML/JS</div>
-                    <div class="tool" data-type="button" draggable="true"><i class="fa-solid fa-play"></i> Button</div>
-                    <div class="tool" data-type="form" draggable="true"><i class="fa-solid fa-align-left"></i> Form</div>
-                    <div class="tool" data-type="checkbox" draggable="true"><i class="fa-regular fa-square-check"></i> Checkbox</div>
-                    <div class="tool" data-type="toggle" draggable="true"><i class="fa-solid fa-toggle-on"></i> Toggle</div>
-                    <div class="tool" data-type="checklist" draggable="true"><i class="fa-solid fa-list-check"></i> Checklist</div>
-                    <div class="tool" data-type="input" draggable="true"><i class="fa-solid fa-keyboard"></i> Input</div>
-                    <div class="tool" data-type="datepicker" draggable="true"><i class="fa-solid fa-calendar"></i> Calendar</div>
-                    <div class="tool" data-type="modal" draggable="true"><i class="fa-regular fa-window-restore"></i> Modal</div>
-                    <div class="tool" data-type="loading" draggable="true"><i class="fa-solid fa-spinner"></i> Loading</div>
-                    <div class="tool" data-type="table" draggable="true"><i class="fa-solid fa-table"></i> Table</div>
                 </div>
             </div>
         </main>
