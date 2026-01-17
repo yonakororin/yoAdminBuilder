@@ -384,6 +384,14 @@ function getTab() {
     return sub?.tabs?.find(t => t.id === state.activeTabId);
 }
 
+function getTabsContainer() {
+    const sub = getSubmenu();
+    if (sub) return sub;
+    const menu = state.config.find(m => m.id === state.selectedMenuId);
+    if (!state.selectedSubmenuId && menu) return menu;
+    return null;
+}
+
 // Get tabs array (from submenu or direct menu)
 function getTabs() {
     const menu = state.config.find(m => m.id === state.selectedMenuId);
@@ -920,17 +928,18 @@ function setupEventListeners() {
         if (e.target.classList.contains('tab-close')) {
             e.stopPropagation();
             const tabId = e.target.closest('.tab').dataset.id;
-            const sub = getSubmenu();
+            const container = getTabsContainer();
+            if (!container) return;
 
-            if (sub.tabs.length <= 1) {
+            if (container.tabs.length <= 1) {
                 alert('Cannot delete the last tab.');
                 return;
             }
 
             if (confirm('Delete this tab?')) {
-                sub.tabs = sub.tabs.filter(t => t.id !== tabId);
+                container.tabs = container.tabs.filter(t => t.id !== tabId);
                 if (state.activeTabId === tabId) {
-                    state.activeTabId = sub.tabs[0].id; // Switch to first available
+                    state.activeTabId = container.tabs[0].id; // Switch to first available
                 }
                 renderTabs();
                 renderGrid();
@@ -943,8 +952,9 @@ function setupEventListeners() {
             e.stopPropagation();
             const tabEl = e.target.closest('.tab');
             const tabId = tabEl.dataset.id;
-            const sub = getSubmenu();
-            const tabData = sub.tabs.find(t => t.id === tabId);
+            const container = getTabsContainer();
+            if (!container) return;
+            const tabData = container.tabs.find(t => t.id === tabId);
 
             const newTitle = prompt('Rename tab:', tabData.title);
             if (newTitle && newTitle.trim() !== '') {
@@ -956,12 +966,12 @@ function setupEventListeners() {
 
         // Add Tab (button is now inside tabs container)
         if (e.target.closest('#add-tab-btn')) {
-            const sub = getSubmenu();
-            if (!sub) return;
+            const container = getTabsContainer();
+            if (!container) return;
             const title = prompt('Tab title:');
             if (title) {
                 const newId = 'tab-' + Date.now();
-                sub.tabs.push({ id: newId, title, components: [] });
+                container.tabs.push({ id: newId, title, components: [] });
                 state.activeTabId = newId;
                 renderTabs();
                 renderGrid();
