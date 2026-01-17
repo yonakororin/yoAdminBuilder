@@ -136,28 +136,61 @@ function renderSidebar() {
     state.config.forEach(menu => {
         const div = document.createElement('div');
         div.className = 'menu-item';
-        div.innerHTML = `
-            <div class="menu-header">
-                <div>
-                    <span><i class="fa-solid fa-folder"></i> ${menu.title}</span>
-                    <i class="fa-solid fa-pen menu-edit" data-id="${menu.id}" title="Rename Menu" style="font-size:0.7rem;margin-left:5px;cursor:pointer;color:var(--text-muted);"></i>
-                    <i class="fa-solid fa-trash menu-delete" data-id="${menu.id}" title="Delete Menu" style="font-size:0.7rem;margin-left:5px;cursor:pointer;color:var(--text-muted);"></i>
-                </div>
-                <button class="icon-btn add-sub" data-id="${menu.id}"><i class="fa-solid fa-plus"></i></button>
-            </div>
-            <div class="submenu-list">
-                ${(menu.submenus || []).map(sub => `
-                    <div class="submenu-item ${state.selectedSubmenuId === sub.id ? 'active' : ''}" data-menu="${menu.id}" data-sub="${sub.id}">
-                        <span>${sub.title}</span>
-                        <div class="sub-actions" style="margin-left:auto;display:none;">
-                            <i class="fa-solid fa-pen submenu-edit" title="Rename Submenu" style="font-size:0.7rem;margin-right:5px;cursor:pointer;color:var(--text-muted);"></i>
-                            <i class="fa-solid fa-trash submenu-delete" title="Delete Submenu" style="font-size:0.7rem;cursor:pointer;color:var(--text-muted);"></i>
-                        </div>
+
+        // Check if menu has direct tabs (no submenus)
+        const hasDirectTabs = menu.tabs && menu.tabs.length > 0 && (!menu.submenus || menu.submenus.length === 0);
+        const isSelected = state.selectedMenuId === menu.id && !state.selectedSubmenuId;
+
+        if (hasDirectTabs) {
+            // Menu with direct tabs - clickable menu header
+            div.innerHTML = `
+                <div class="menu-header menu-direct ${isSelected ? 'active' : ''}" data-menu="${menu.id}">
+                    <div>
+                        <span><i class="fa-solid fa-file-alt"></i> ${menu.title}</span>
+                        <i class="fa-solid fa-pen menu-edit" data-id="${menu.id}" title="Rename Menu" style="font-size:0.7rem;margin-left:5px;cursor:pointer;color:var(--text-muted);"></i>
+                        <i class="fa-solid fa-trash menu-delete" data-id="${menu.id}" title="Delete Menu" style="font-size:0.7rem;margin-left:5px;cursor:pointer;color:var(--text-muted);"></i>
                     </div>
-                `).join('')}
-            </div>
-        `;
+                </div>
+            `;
+        } else {
+            // Menu with submenus - expandable
+            div.innerHTML = `
+                <div class="menu-header">
+                    <div>
+                        <span><i class="fa-solid fa-folder"></i> ${menu.title}</span>
+                        <i class="fa-solid fa-pen menu-edit" data-id="${menu.id}" title="Rename Menu" style="font-size:0.7rem;margin-left:5px;cursor:pointer;color:var(--text-muted);"></i>
+                        <i class="fa-solid fa-trash menu-delete" data-id="${menu.id}" title="Delete Menu" style="font-size:0.7rem;margin-left:5px;cursor:pointer;color:var(--text-muted);"></i>
+                    </div>
+                    <button class="icon-btn add-sub" data-id="${menu.id}"><i class="fa-solid fa-plus"></i></button>
+                </div>
+                <div class="submenu-list">
+                    ${(menu.submenus || []).map(sub => `
+                        <div class="submenu-item ${state.selectedSubmenuId === sub.id ? 'active' : ''}" data-menu="${menu.id}" data-sub="${sub.id}">
+                            <span>${sub.title}</span>
+                            <div class="sub-actions" style="margin-left:auto;display:none;">
+                                <i class="fa-solid fa-pen submenu-edit" title="Rename Submenu" style="font-size:0.7rem;margin-right:5px;cursor:pointer;color:var(--text-muted);"></i>
+                                <i class="fa-solid fa-trash submenu-delete" title="Delete Submenu" style="font-size:0.7rem;cursor:pointer;color:var(--text-muted);"></i>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
         menuTreeEl.appendChild(div);
+    });
+
+    // Click handler for direct menu (no submenus)
+    document.querySelectorAll('.menu-direct').forEach(el => {
+        el.addEventListener('click', (e) => {
+            if (e.target.closest('.menu-edit') || e.target.closest('.menu-delete')) return;
+            const menuId = el.dataset.menu;
+            state.selectedMenuId = menuId;
+            state.selectedSubmenuId = null; // No submenu
+            const menu = state.config.find(m => m.id === menuId);
+            if (menu?.tabs?.length) state.activeTabId = menu.tabs[0].id;
+            renderSidebar();
+            showWorkspace();
+        });
     });
 
     // Submenu edit/delete icon hover effect
@@ -175,11 +208,11 @@ function renderSidebar() {
 }
 
 function renderTabs() {
-    const submenu = getSubmenu();
-    if (!submenu) return;
+    const tabs = getTabs();
+    if (tabs.length === 0) return;
 
     // Render tabs with edit controls + add button
-    let html = (submenu.tabs || []).map(t => `
+    let html = tabs.map(t => `
         <div class="tab ${state.activeTabId === t.id ? 'active' : ''}" data-id="${t.id}">
             <span class="tab-title">${t.title}</span>
             <i class="fa-solid fa-pen tab-edit" title="Rename"></i>
@@ -333,12 +366,36 @@ function getComponentContent(comp) {
 // ============================================================
 function getSubmenu() {
     const menu = state.config.find(m => m.id === state.selectedMenuId);
+    // If no submenu selected but menu has direct tabs, return null (use getMenuTabs instead)
+    if (!state.selectedSubmenuId) return null;
     return menu?.submenus?.find(s => s.id === state.selectedSubmenuId);
 }
 
 function getTab() {
+    const menu = state.config.find(m => m.id === state.selectedMenuId);
+
+    // Check for menu-level tabs first (no submenu selected)
+    if (!state.selectedSubmenuId && menu?.tabs) {
+        return menu.tabs.find(t => t.id === state.activeTabId);
+    }
+
+    // Otherwise, use submenu tabs
     const sub = getSubmenu();
     return sub?.tabs?.find(t => t.id === state.activeTabId);
+}
+
+// Get tabs array (from submenu or direct menu)
+function getTabs() {
+    const menu = state.config.find(m => m.id === state.selectedMenuId);
+
+    // Menu-level tabs
+    if (!state.selectedSubmenuId && menu?.tabs) {
+        return menu.tabs;
+    }
+
+    // Submenu tabs
+    const sub = getSubmenu();
+    return sub?.tabs || [];
 }
 
 function syncCurrentTab() {
@@ -740,7 +797,14 @@ function setupEventListeners() {
     document.getElementById('add-menu-btn').addEventListener('click', () => {
         const title = prompt('Menu title:');
         if (title) {
-            state.config.push({ id: 'menu-' + Date.now(), title, submenus: [] });
+            const hasSubmenus = confirm('サブメニューを使用しますか？\n\nOK = サブメニューあり\nキャンセル = 直接タブを配置');
+            if (hasSubmenus) {
+                // Traditional menu with submenus
+                state.config.push({ id: 'menu-' + Date.now(), title, submenus: [] });
+            } else {
+                // Direct tabs menu (no submenus)
+                state.config.push({ id: 'menu-' + Date.now(), title, tabs: [{ id: 'tab-' + Date.now(), title: 'Main', components: [] }] });
+            }
             renderSidebar();
         }
     });
@@ -946,23 +1010,32 @@ function showWorkspace() {
     toolboxEl.classList.remove('hidden');
     const menu = state.config.find(m => m.id === state.selectedMenuId);
     const sub = getSubmenu();
-    breadcrumbsEl.textContent = `${menu?.title} > ${sub?.title}`;
 
-    // Ensure tabs array exists
-    if (!sub.tabs) {
-        sub.tabs = [];
+    // Set breadcrumb based on whether submenu exists
+    if (sub) {
+        breadcrumbsEl.textContent = `${menu?.title} > ${sub?.title}`;
+    } else {
+        breadcrumbsEl.textContent = menu?.title || '';
+    }
+
+    // Get or create tabs array (from submenu or menu)
+    let tabsContainer = sub || menu;
+    if (!tabsContainer) return;
+
+    if (!tabsContainer.tabs) {
+        tabsContainer.tabs = [];
     }
 
     // Auto-create default tab if none exists
-    if (sub.tabs.length === 0) {
+    if (tabsContainer.tabs.length === 0) {
         const defaultTab = { id: 'tab-' + Date.now(), title: 'Main', components: [] };
-        sub.tabs.push(defaultTab);
+        tabsContainer.tabs.push(defaultTab);
         console.log('Created default tab:', defaultTab);
     }
 
     // Always select first tab
-    state.activeTabId = sub.tabs[0].id;
-    console.log('showWorkspace - activeTabId:', state.activeTabId, 'tabs:', sub.tabs);
+    state.activeTabId = tabsContainer.tabs[0].id;
+    console.log('showWorkspace - activeTabId:', state.activeTabId, 'tabs:', tabsContainer.tabs);
 
     renderTabs();
     renderGrid();

@@ -280,14 +280,41 @@
 
         function renderSidebar() {
             const el = document.getElementById('menu-tree');
-            el.innerHTML = state.config.map(m => `
-                <div class="menu-item">
-                    <div class="menu-header"><span><i class="fa-solid fa-folder"></i> ${m.title}</span></div>
-                    <div class="submenu-list">
-                        ${(m.submenus || []).map(s => `<div class="submenu-item ${state.selectedSubmenuId === s.id ? 'active' : ''}" data-menu="${m.id}" data-sub="${s.id}">${s.title}</div>`).join('')}
-                    </div>
-                </div>
-            `).join('');
+            el.innerHTML = state.config.map(m => {
+                const hasDirectTabs = m.tabs && m.tabs.length > 0 && (!m.submenus || m.submenus.length === 0);
+                const isSelected = state.selectedMenuId === m.id && !state.selectedSubmenuId;
+                
+                if (hasDirectTabs) {
+                    return `
+                        <div class="menu-item">
+                            <div class="menu-header menu-direct ${isSelected ? 'active' : ''}" data-menu="${m.id}">
+                                <span><i class="fa-solid fa-file-alt"></i> ${m.title}</span>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    return `
+                        <div class="menu-item">
+                            <div class="menu-header"><span><i class="fa-solid fa-folder"></i> ${m.title}</span></div>
+                            <div class="submenu-list">
+                                ${(m.submenus || []).map(s => `<div class="submenu-item ${state.selectedSubmenuId === s.id ? 'active' : ''}" data-menu="${m.id}" data-sub="${s.id}">${s.title}</div>`).join('')}
+                            </div>
+                        </div>
+                    `;
+                }
+            }).join('');
+
+            // Click handler for direct menu
+            el.querySelectorAll('.menu-direct').forEach(item => {
+                item.onclick = () => {
+                    state.selectedMenuId = item.dataset.menu;
+                    state.selectedSubmenuId = null;
+                    const menu = state.config.find(m => m.id === state.selectedMenuId);
+                    if (menu?.tabs?.length) state.activeTabId = menu.tabs[0].id;
+                    renderSidebar();
+                    showWorkspace();
+                };
+            });
 
             el.querySelectorAll('.submenu-item').forEach(item => {
                 item.onclick = () => {
@@ -302,7 +329,15 @@
 
         function getSubmenu() {
             const m = state.config.find(x => x.id === state.selectedMenuId);
+            if (!state.selectedSubmenuId) return null;
             return m?.submenus?.find(x => x.id === state.selectedSubmenuId);
+        }
+        
+        function getTabs() {
+            const menu = state.config.find(m => m.id === state.selectedMenuId);
+            if (!state.selectedSubmenuId && menu?.tabs) return menu.tabs;
+            const sub = getSubmenu();
+            return sub?.tabs || [];
         }
 
         function showWorkspace() {
@@ -310,23 +345,23 @@
             document.getElementById('workspace').classList.remove('hidden');
             const m = state.config.find(x => x.id === state.selectedMenuId);
             const s = getSubmenu();
-            document.getElementById('breadcrumbs').textContent = `${m?.title} > ${s?.title}`;
+            document.getElementById('breadcrumbs').textContent = s ? `${m?.title} > ${s?.title}` : m?.title || '';
             renderTabs();
             renderGrid();
         }
 
         function renderTabs() {
-            const s = getSubmenu();
+            const tabs = getTabs();
             const el = document.getElementById('tabs');
-            el.innerHTML = (s?.tabs || []).map(t => `<div class="tab ${state.activeTabId === t.id ? 'active' : ''}" data-id="${t.id}">${t.title}</div>`).join('');
+            el.innerHTML = tabs.map(t => `<div class="tab ${state.activeTabId === t.id ? 'active' : ''}" data-id="${t.id}">${t.title}</div>`).join('');
             el.querySelectorAll('.tab').forEach(t => {
                 t.onclick = () => { state.activeTabId = t.dataset.id; renderTabs(); renderGrid(); };
             });
         }
 
         function renderGrid() {
-            const s = getSubmenu();
-            const t = s?.tabs?.find(x => x.id === state.activeTabId);
+            const tabs = getTabs();
+            const t = tabs.find(x => x.id === state.activeTabId);
             const g = document.getElementById('grid');
             g.innerHTML = (t?.components || []).map(c => {
                 // For modal/loading, putting ID on wrapper causes collision with overlay ID.

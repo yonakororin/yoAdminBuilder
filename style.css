@@ -141,6 +141,15 @@ body {
     background: var(--bg-hover);
 }
 
+.menu-header.menu-direct {
+    cursor: pointer;
+}
+
+.menu-header.menu-direct.active {
+    background: var(--primary);
+    color: white;
+}
+
 .submenu-list {
     margin-left: 1rem;
     border-left: 1px solid var(--border);
