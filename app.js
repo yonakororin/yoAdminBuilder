@@ -230,8 +230,8 @@ function getComponentContent(comp) {
             const nameAttr = mode === 'single' ? `name="chk-${comp.id}"` : '';
 
             let listHtml = items.map((item, idx) => `
-                <label class="checklist-item" style="display:flex;align-items:center;gap:8px;margin-bottom:4px;cursor:pointer;">
-                    <input type="${inputType}" ${nameAttr} id="${comp.id}-${idx}">
+                <label class="checklist-item" style="display:flex;align-items:center;gap:6px;margin-bottom:4px;cursor:pointer;">
+                    <input type="${inputType}" ${nameAttr} id="${comp.id}-${idx}" style="margin:0;width:auto;cursor:pointer;">
                     <span>${item}</span>
                 </label>
             `).join('');

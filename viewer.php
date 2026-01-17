@@ -196,8 +196,8 @@
                     const nameAttr = mode === 'single' ? `name="chk-${comp.customId || Math.random().toString(36).substr(2, 9)}"` : ''; 
                     
                     let listHtml = items.map((item, idx) => `
-                        <label class="checklist-item" style="display:flex;align-items:center;gap:8px;margin-bottom:4px;cursor:pointer;">
-                            <input type="${inputType}" ${nameAttr} id="${comp.customId || 'chk'}-${idx}">
+                        <label class="checklist-item" style="display:flex;align-items:center;gap:6px;margin-bottom:4px;cursor:pointer;">
+                            <input type="${inputType}" ${nameAttr} id="${comp.customId || 'chk'}-${idx}" style="margin:0;width:auto;cursor:pointer;">
                             <span>${item}</span>
                         </label>
                     `).join('');
