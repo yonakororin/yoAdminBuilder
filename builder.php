@@ -138,7 +138,7 @@
     </div>
 
     <!-- Browser Modal (Stacked) -->
-    <div id="browser-modal" class="modal hidden" style="z-index:1100;">
+    <div id="browser-modal" class="modal hidden" style="z-index:10001;">
         <div class="modal-content" style="max-width:600px;">
             <header>
                 <span id="browser-modal-title">Browse Files</span>

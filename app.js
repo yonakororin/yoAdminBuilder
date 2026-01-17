@@ -32,6 +32,7 @@ const modalBodyEl = document.getElementById('modal-body');
 let dragState = null;
 let currentEditComp = null; // For modal editing
 let codeMirrorInstance = null; // CodeMirror editor instance
+let pendingFilePath = null; // Stores file path selected from browser
 
 // ============================================================
 // INITIALIZATION
@@ -260,7 +261,17 @@ function getComponentContent(comp) {
         case 'form':
             return `<div class="comp-form"><span>${label}</span></div>`;
         case 'html':
-            return `<div class="comp-html">${comp.content || '<em>HTML/JS</em>'}</div>`;
+            if (comp.content) {
+                return `<div class="comp-html">${comp.content}</div>`;
+            } else if (comp.filePath) {
+                // Show file path info with load indicator
+                const filename = comp.filePath.split('/').pop();
+                return `<div class="comp-html comp-html-file" data-file="${comp.filePath}">
+                    <i class="fa-solid fa-file-code"></i> ${filename}
+                </div>`;
+            } else {
+                return `<div class="comp-html"><em>HTML/JS</em></div>`;
+            }
         case 'checklist': {
             const items = comp.items || ['Option 1', 'Option 2', 'Option 3'];
             const mode = comp.checklistMode || 'multi'; // 'single' (radio behavior) or 'multi' (checkbox)
@@ -462,10 +473,8 @@ function openComponentSettings(comp) {
             </div>
             <div id="file-mode" class="editor-mode ${!comp.content ? '' : 'hidden'}">
                 <label>File Path:</label>
-                <div style="display:flex;gap:5px;">
-                    <input type="text" id="html-file-path" placeholder="components/widget.html" value="${comp.filePath || ''}" style="flex:1;">
-                    <button id="html-file-browse" class="btn-sm" title="Browse Files"><i class="fa-solid fa-folder-open"></i></button>
-                </div>
+                <input type="text" id="html-file-path" placeholder="components/widget.html" value="${comp.filePath || ''}" style="width:100%;margin-bottom:5px;">
+                <button id="html-file-browse" class="btn-sm" title="Browse Files" style="width:auto;"><i class="fa-solid fa-folder-open"></i> Browse</button>
             </div>
             <div id="direct-mode" class="editor-mode ${comp.content ? '' : 'hidden'}">
                 <label>HTML Content:</label>
@@ -586,16 +595,37 @@ function openComponentSettings(comp) {
         const browseBtn = document.getElementById('html-file-browse');
         if (browseBtn) {
             browseBtn.onclick = () => {
-                // Use * to allow flexibility, or specific exts
-                openSelectFileModal((filename) => {
-                    document.getElementById('html-file-path').value = filename;
+                // Open file browser on top (z-index 10001)
+                openSelectFileModal((filename, currentPath) => {
+                    // Store in global variable
+                    pendingFilePath = filename;
+
+                    // Update component reference immediately
+                    if (currentEditComp) {
+                        currentEditComp.filePath = filename;
+                        currentEditComp.content = null;
+                    }
+
+                    // Update the input field
+                    const pathInput = document.getElementById('html-file-path');
+                    if (pathInput) {
+                        pathInput.value = filename;
+                    }
                 }, ['html', 'htm', 'js', 'css', 'php', 'txt'], 'Select Widget File');
             };
         }
+
+        // Force set input value after everything is initialized (fixes display issue)
+        setTimeout(() => {
+            const pathInput = document.getElementById('html-file-path');
+            if (pathInput && comp.filePath) {
+                pathInput.value = comp.filePath;
+            }
+        }, 50);
     }
 }
 
-function handleModalConfirm() {
+function saveComponentState() {
     if (!currentEditComp) return;
 
     // Common fields
@@ -611,12 +641,14 @@ function handleModalConfirm() {
 
     // HTML/Modal specific
     if (currentEditComp.type === 'html' || currentEditComp.type === 'modal') {
-        const filePath = document.getElementById('html-file-path')?.value?.trim();
+        // Use pendingFilePath if set (from file browser), otherwise read from input
+        const filePath = pendingFilePath || document.getElementById('html-file-path')?.value?.trim();
         // Get content from CodeMirror if available, otherwise from textarea
         const directContent = codeMirrorInstance ? codeMirrorInstance.getValue() : document.getElementById('html-direct-content')?.value;
         if (filePath) {
             currentEditComp.filePath = filePath;
             currentEditComp.content = null;
+            pendingFilePath = null; // Clear after use
         } else if (directContent) {
             currentEditComp.content = directContent;
             currentEditComp.filePath = null;
@@ -655,7 +687,11 @@ function handleModalConfirm() {
     // Label position
     const labelPos = document.getElementById('comp-label-position')?.value;
     if (labelPos) currentEditComp.labelPosition = labelPos;
+}
 
+function handleModalConfirm() {
+    if (!currentEditComp) return;
+    saveComponentState();
     closeModal();
     renderGrid();
 }
@@ -1183,8 +1219,12 @@ async function openSelectFileModal(onSelect, extensions = ['json'], title = 'Bro
                     if (item.type === 'dir') {
                         loadPath(item.path);
                     } else {
-                        onSelect(item.name);
-                        closeBrowserModal(); // Close the stacked modal
+                        // Close browser modal FIRST
+                        closeBrowserModal();
+                        // Then call onSelect after a delay to ensure modal is fully closed
+                        setTimeout(() => {
+                            onSelect(item.path, currentPath);
+                        }, 100);
                     }
                 };
                 listEl.appendChild(row);

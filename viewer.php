@@ -191,8 +191,29 @@
                 </div>
             `}).join('');
             
-            // Execute scripts in HTML components
+            // Load HTML files and execute scripts
+            loadHtmlFiles(g);
             executeScripts(g);
+        }
+        
+        async function loadHtmlFiles(container) {
+            const fileElements = container.querySelectorAll('.comp-html-file[data-file]');
+            for (const el of fileElements) {
+                const filePath = el.dataset.file;
+                try {
+                    const res = await fetch(`api.php?action=readfile&path=${encodeURIComponent(filePath)}`);
+                    if (res.ok) {
+                        const content = await res.text();
+                        el.innerHTML = content;
+                        // Execute any scripts in the loaded content
+                        executeScripts(el);
+                    } else {
+                        el.innerHTML = `<span style="color:red;">Error loading file</span>`;
+                    }
+                } catch (e) {
+                    el.innerHTML = `<span style="color:red;">Load error: ${e.message}</span>`;
+                }
+            }
         }
         
         function executeScripts(container) {
@@ -240,7 +261,14 @@
                 case 'form':
                     return `<div class="comp-form"><span>${label}</span></div>`;
                 case 'html':
-                    return `<div class="comp-html">${comp.content || ''}</div>`;
+                    if (comp.content) {
+                        return `<div class="comp-html">${comp.content}</div>`;
+                    } else if (comp.filePath) {
+                        // Return container with data attribute for async file loading
+                        return `<div class="comp-html comp-html-file" data-file="${comp.filePath}"><i class="fa-solid fa-spinner fa-spin"></i> Loading...</div>`;
+                    } else {
+                        return `<div class="comp-html"></div>`;
+                    }
                 case 'checklist': {
                     const items = comp.items || ['Option 1', 'Option 2', 'Option 3'];
                     const mode = comp.checklistMode || 'multi'; 

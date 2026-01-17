@@ -48,6 +48,20 @@ if (isset($_GET['action']) && $_GET['action'] === 'browse') {
     exit;
 }
 
+// Read file action - for loading HTML component files
+if (isset($_GET['action']) && $_GET['action'] === 'readfile') {
+    $path = $_GET['path'] ?? '';
+    if (empty($path) || !file_exists($path)) {
+        http_response_code(404);
+        echo json_encode(['error' => 'File not found']);
+        exit;
+    }
+    // Return raw file content (for HTML/JS files)
+    header('Content-Type: text/html; charset=UTF-8');
+    readfile($path);
+    exit;
+}
+
 // Default file if none specified
 $filename = 'data.json';
 
