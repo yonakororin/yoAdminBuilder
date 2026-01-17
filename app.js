@@ -1402,7 +1402,7 @@ async function openSaveAsModal() {
 
     async function loadPath(path = '') {
         try {
-            const res = await fetch(`api.php ? action = browse & path=${encodeURIComponent(path)} `);
+            const res = await fetch(`api.php?action=browse&path=${encodeURIComponent(path)}`);
             const data = await res.json();
             currentPath = data.current_path;
             pathEl.textContent = currentPath;
