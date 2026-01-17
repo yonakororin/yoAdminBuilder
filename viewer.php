@@ -320,8 +320,10 @@
                                     <span><i class="fa-solid fa-folder"></i> ${m.title}</span>
                                 </div>
                             </div>
-                            <div class="submenu-list" style="${isExpanded ? '' : 'display:none;'}">
-                                ${(m.submenus || []).map(s => `<div class="submenu-item ${state.selectedSubmenuId === s.id ? 'active' : ''}" data-menu="${m.id}" data-sub="${s.id}">${s.title}</div>`).join('')}
+                            <div class="submenu-list ${isExpanded ? 'open' : ''}">
+                                <div class="submenu-inner">
+                                    ${(m.submenus || []).map(s => `<div class="submenu-item ${state.selectedSubmenuId === s.id ? 'active' : ''}" data-menu="${m.id}" data-sub="${s.id}">${s.title}</div>`).join('')}
+                                </div>
                             </div>
                         </div>
                     `;
@@ -356,22 +358,28 @@
                     const menuItem = item.closest('.menu-item');
                     const submenuList = menuItem.querySelector('.submenu-list');
                     const chevron = item.querySelector('.menu-chevron');
-                    const isHidden = submenuList?.style.display === 'none';
+                    // Check if currently open (by class)
+                    const isOpen = submenuList?.classList.contains('open');
                     
                     // Accordion: collapse all other menus first
                     el.querySelectorAll('.menu-item').forEach(otherItem => {
                         if (otherItem !== menuItem) {
                             const otherList = otherItem.querySelector('.submenu-list');
                             const otherChevron = otherItem.querySelector('.menu-chevron');
-                            if (otherList) otherList.style.display = 'none';
+                            if (otherList) otherList.classList.remove('open');
                             if (otherChevron) otherChevron.classList.remove('expanded');
                         }
                     });
                     
                     // Toggle clicked menu
                     if (submenuList) {
-                        submenuList.style.display = isHidden ? 'block' : 'none';
-                        if (chevron) chevron.classList.toggle('expanded', isHidden);
+                        if (isOpen) {
+                            submenuList.classList.remove('open');
+                            if (chevron) chevron.classList.remove('expanded');
+                        } else {
+                            submenuList.classList.add('open');
+                            if (chevron) chevron.classList.add('expanded');
+                        }
                     }
                 };
             });

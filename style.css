@@ -167,6 +167,17 @@ body {
     margin-left: 1rem;
     border-left: 1px solid var(--border);
     padding-left: 0.5rem;
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows 0.3s ease;
+}
+
+.submenu-list.open {
+    grid-template-rows: 1fr;
+}
+
+.submenu-inner {
+    overflow: hidden;
 }
 
 .submenu-item {

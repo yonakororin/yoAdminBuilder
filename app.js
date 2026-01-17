@@ -186,16 +186,18 @@ function renderSidebar() {
                     </div>
                     <button class="icon-btn add-sub" data-id="${menu.id}"><i class="fa-solid fa-plus"></i></button>
                 </div>
-                <div class="submenu-list" style="${isExpanded ? '' : 'display:none;'}">
-                    ${(menu.submenus || []).map(sub => `
-                        <div class="submenu-item ${state.selectedSubmenuId === sub.id ? 'active' : ''}" data-menu="${menu.id}" data-sub="${sub.id}">
-                            <span>${sub.title}</span>
-                            <div class="sub-actions" style="margin-left:auto;display:none;">
-                                <i class="fa-solid fa-pen submenu-edit" title="Rename Submenu" style="font-size:0.7rem;margin-right:5px;cursor:pointer;color:var(--text-muted);"></i>
-                                <i class="fa-solid fa-trash submenu-delete" title="Delete Submenu" style="font-size:0.7rem;cursor:pointer;color:var(--text-muted);"></i>
+                <div class="submenu-list ${isExpanded ? 'open' : ''}">
+                    <div class="submenu-inner">
+                        ${(menu.submenus || []).map(sub => `
+                            <div class="submenu-item ${state.selectedSubmenuId === sub.id ? 'active' : ''}" data-menu="${menu.id}" data-sub="${sub.id}">
+                                <span>${sub.title}</span>
+                                <div class="sub-actions" style="margin-left:auto;display:none;">
+                                    <i class="fa-solid fa-pen submenu-edit" title="Rename Submenu" style="font-size:0.7rem;margin-right:5px;cursor:pointer;color:var(--text-muted);"></i>
+                                    <i class="fa-solid fa-trash submenu-delete" title="Delete Submenu" style="font-size:0.7rem;cursor:pointer;color:var(--text-muted);"></i>
+                                </div>
                             </div>
-                        </div>
-                    `).join('')}
+                        `).join('')}
+                    </div>
                 </div>
             `;
         }
@@ -223,22 +225,28 @@ function renderSidebar() {
             const menuItem = el.closest('.menu-item');
             const submenuList = menuItem.querySelector('.submenu-list');
             const chevron = el.querySelector('.menu-chevron');
-            const isHidden = submenuList?.style.display === 'none';
+            // Check if currently open (by class)
+            const isOpen = submenuList?.classList.contains('open');
 
             // Accordion: collapse all other menus first
             document.querySelectorAll('.menu-item').forEach(item => {
                 if (item !== menuItem) {
                     const otherList = item.querySelector('.submenu-list');
                     const otherChevron = item.querySelector('.menu-chevron');
-                    if (otherList) otherList.style.display = 'none';
+                    if (otherList) otherList.classList.remove('open');
                     if (otherChevron) otherChevron.classList.remove('expanded');
                 }
             });
 
             // Toggle clicked menu
             if (submenuList) {
-                submenuList.style.display = isHidden ? 'block' : 'none';
-                if (chevron) chevron.classList.toggle('expanded', isHidden);
+                if (isOpen) {
+                    submenuList.classList.remove('open');
+                    if (chevron) chevron.classList.remove('expanded');
+                } else {
+                    submenuList.classList.add('open');
+                    if (chevron) chevron.classList.add('expanded');
+                }
             }
         });
     });
