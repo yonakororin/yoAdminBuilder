@@ -35,24 +35,6 @@
             </div>
             <div id="menu-tree" class="menu-tree"></div>
             <div class="sidebar-footer">
-                <div class="theme-selector" style="margin-bottom:0.5rem;">
-                    <label style="font-size:0.75rem;color:var(--text-muted);margin-right:0.5rem;">Theme:</label>
-                    <select title="Theme">
-                        <option value="dark">🌙 Dark</option>
-                        <option value="light">☀️ Light</option>
-                        <option value="midnight">🔮 Midnight</option>
-                        <option value="ocean">🌊 Ocean</option>
-                        <option value="forest">🌲 Forest</option>
-                        <option value="sunset">🌅 Sunset</option>
-                        <option value="mono">⬜ Mono</option>
-                        <option value="rose">🌸 Rose</option>
-                    </select>
-                </div>
-                <div style="margin-top: 10px; text-align: center; border-top: 1px solid var(--border); padding-top: 10px;">
-                    <a href="logout.php" style="color: var(--text-muted); font-size: 0.8rem; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 5px;">
-                        <i class="fa-solid fa-sign-out-alt"></i> Logout
-                    </a>
-                </div>
                 <!-- Help Button -->
                 <div style="margin-top: 10px; text-align: center;">
                     <button onclick="openHelp()" style="background:none;border:none;color:var(--primary);cursor:pointer;font-size:0.8rem;text-decoration:underline;">
@@ -64,6 +46,33 @@
         <main class="main">
             <header class="header">
                 <div id="breadcrumbs" class="breadcrumbs">Select a submenu</div>
+                <div class="user-menu">
+                    <button class="user-menu-btn" id="user-menu-btn">
+                        <i class="fa-solid fa-user-circle"></i>
+                        <span><?= htmlspecialchars($_SESSION['user'] ?? 'User') ?></span>
+                        <i class="fa-solid fa-chevron-down" style="font-size:0.6rem;"></i>
+                    </button>
+                    <div class="user-menu-dropdown" id="user-menu-dropdown">
+                        <div class="user-menu-item theme-select">
+                            <i class="fa-solid fa-palette"></i>
+                            <span>Theme:</span>
+                            <select id="theme-select" title="Theme">
+                                <option value="dark">🌙 Dark</option>
+                                <option value="light">☀️ Light</option>
+                                <option value="midnight">🔮 Midnight</option>
+                                <option value="ocean">🌊 Ocean</option>
+                                <option value="forest">🌲 Forest</option>
+                                <option value="sunset">🌅 Sunset</option>
+                                <option value="mono">⬜ Mono</option>
+                                <option value="rose">🌸 Rose</option>
+                            </select>
+                        </div>
+                        <a href="logout.php" class="user-menu-item">
+                            <i class="fa-solid fa-sign-out-alt"></i>
+                            <span>Logout</span>
+                        </a>
+                    </div>
+                </div>
             </header>
             <div id="empty-state" class="empty-state"><p>Select a submenu to view.</p></div>
             <div id="workspace" class="workspace hidden">
@@ -572,6 +581,23 @@
         init();
     </script>
     <script>window.currentUser = "<?= isset($_SESSION['user']) ? htmlspecialchars($_SESSION['user']) : '' ?>";</script>
+    <script>
+        // User menu dropdown toggle
+        document.getElementById('user-menu-btn')?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            document.getElementById('user-menu-dropdown')?.classList.toggle('show');
+        });
+        
+        // Close dropdown when clicking outside
+        document.addEventListener('click', () => {
+            document.getElementById('user-menu-dropdown')?.classList.remove('show');
+        });
+        
+        // Prevent dropdown from closing when clicking inside
+        document.getElementById('user-menu-dropdown')?.addEventListener('click', (e) => {
+            e.stopPropagation();
+        });
+    </script>
     <script src="../shared/theme.js"></script>
 </body>
 </html>
