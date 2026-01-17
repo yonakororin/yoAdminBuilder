@@ -779,8 +779,11 @@ body {
 .modal-content {
     background: var(--bg-card);
     width: 400px;
+    max-height: 90vh;
     border-radius: 8px;
     border: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
 }
 
 .modal-content header {
@@ -789,6 +792,7 @@ body {
     align-items: center;
     padding: 1rem;
     border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
 }
 
 .modal-content header button {
@@ -801,6 +805,8 @@ body {
 
 #modal-body {
     padding: 1rem;
+    overflow-y: auto;
+    flex: 1;
 }
 
 .modal-content footer {

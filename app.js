@@ -653,6 +653,10 @@ function openComponentSettings(comp) {
         };
     });
 
+    // Ensure footer is visible (may have been hidden by other modal uses)
+    const footer = modalEl.querySelector('footer');
+    if (footer) footer.style.display = 'flex';
+
     modalEl.classList.remove('hidden');
 
     // Initialize CodeMirror for HTML/Modal type
@@ -735,15 +739,21 @@ function saveComponentState() {
 
     // HTML/Modal specific
     if (currentEditComp.type === 'html' || currentEditComp.type === 'modal') {
+        const fileTabActive = document.querySelector('.html-tab[data-mode="file"]')?.classList.contains('active');
+
         // Use pendingFilePath if set (from file browser), otherwise read from input
-        const filePath = pendingFilePath || document.getElementById('html-file-path')?.value?.trim();
+        const inputFilePath = document.getElementById('html-file-path')?.value?.trim();
+        const filePath = pendingFilePath || inputFilePath;
+
         // Get content from CodeMirror if available, otherwise from textarea
         const directContent = codeMirrorInstance ? codeMirrorInstance.getValue() : document.getElementById('html-direct-content')?.value;
-        if (filePath) {
+
+        if (fileTabActive && filePath) {
             currentEditComp.filePath = filePath;
             currentEditComp.content = null;
             pendingFilePath = null; // Clear after use
-        } else if (directContent) {
+        } else {
+            // Direct mode or file path empty -> use direct content
             currentEditComp.content = directContent;
             currentEditComp.filePath = null;
         }
@@ -1257,10 +1267,6 @@ function openModal(title, bodyHtml, hideFooter = false) {
     const footer = modalEl.querySelector('footer');
     if (footer) footer.style.display = hideFooter ? 'none' : 'flex';
     modalEl.classList.remove('hidden');
-}
-
-function closeModal() {
-    modalEl.classList.add('hidden');
 }
 
 // ============================================================
