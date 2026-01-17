@@ -53,6 +53,12 @@
                         <i class="fa-solid fa-sign-out-alt"></i> Logout
                     </a>
                 </div>
+                <!-- Help Button -->
+                <div style="margin-top: 10px; text-align: center;">
+                    <button onclick="openHelp()" style="background:none;border:none;color:var(--primary);cursor:pointer;font-size:0.8rem;text-decoration:underline;">
+                        <i class="fa-regular fa-circle-question"></i> Help / Guide
+                    </button>
+                </div>
             </div>
         </aside>
         <main class="main">
@@ -71,6 +77,17 @@
         </main>
     </div>
 
+    <!-- Help Modal -->
+    <div id="help-modal" class="comp-modal-overlay">
+        <div class="comp-modal-content" style="max-width:800px;width:90%;">
+            <button class="comp-modal-close" onclick="closeModal('help-modal')">&times;</button>
+            <div id="help-content" style="max-height:80vh;overflow-y:auto;line-height:1.6;">Loading guide...</div>
+        </div>
+    </div>
+
+    <!-- Marked.js for MDS rendering -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
     <script>
         // Global helpers via window
         window.openModal = function(id) {
@@ -86,6 +103,20 @@
                 if(overlay) overlay.style.display = 'none';
             }
         };
+        
+        // Help function
+        async function openHelp() {
+            openModal('help-modal');
+            const el = document.getElementById('help-content');
+            try {
+                const res = await fetch('GUIDE.md');
+                if (!res.ok) throw new Error('Failed to load guide');
+                const text = await res.text();
+                el.innerHTML = marked.parse(text);
+            } catch (e) {
+                el.innerHTML = '<p style="color:red">Error loading guide: ' + e.message + '</p>';
+            }
+        }
 
         // Viewer Mode - Read Only
         const state = { config: [], selectedMenuId: null, selectedSubmenuId: null, activeTabId: null };

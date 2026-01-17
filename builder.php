@@ -61,6 +61,12 @@
                         <i class="fa-solid fa-sign-out-alt"></i> Logout
                     </a>
                 </div>
+                <!-- Help Button -->
+                <div style="margin-top: 10px; text-align: center;">
+                    <button onclick="openHelp()" style="background:none;border:none;color:var(--primary);cursor:pointer;font-size:0.8rem;text-decoration:underline;">
+                        <i class="fa-regular fa-circle-question"></i> Help / Guide
+                    </button>
+                </div>
             </div>
         </aside>
 
@@ -107,6 +113,17 @@
         </main>
     </div>
 
+    <!-- Help Modal -->
+    <div id="help-modal" class="comp-modal-overlay">
+        <div class="comp-modal-content" style="max-width:800px;width:90%;">
+            <button class="comp-modal-close" onclick="document.getElementById('help-modal').style.display='none'">&times;</button>
+            <div id="help-content" style="max-height:80vh;overflow-y:auto;line-height:1.6;">Loading guide...</div>
+        </div>
+    </div>
+
+    <!-- Marked.js -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
     <!-- Modal -->
     <div id="modal" class="modal hidden">
         <div class="modal-content">
@@ -120,6 +137,20 @@
     </div>
 
     <script>window.currentUser = "<?= isset($_SESSION['user']) ? htmlspecialchars($_SESSION['user']) : '' ?>";</script>
+    <script>
+        async function openHelp() {
+            document.getElementById('help-modal').style.display = 'flex';
+            const el = document.getElementById('help-content');
+            try {
+                const res = await fetch('GUIDE.md');
+                if (!res.ok) throw new Error('Failed to load guide');
+                const text = await res.text();
+                el.innerHTML = marked.parse(text);
+            } catch (e) {
+                el.innerHTML = '<p style="color:red">Error loading guide: ' + e.message + '</p>';
+            }
+        }
+    </script>
     <script src="../shared/theme.js"></script>
     <script src="app.js"></script>
 </body>
