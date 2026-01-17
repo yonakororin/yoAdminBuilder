@@ -38,7 +38,8 @@
         <main class="main">
             <header class="header">
                 <div id="breadcrumbs" class="breadcrumbs">Select a submenu</div>
-                <div class="user-menu">
+                <div class="header-right">
+                    <div class="user-menu">
                     <button class="user-menu-btn" id="user-menu-btn">
                         <i class="fa-solid fa-user-circle"></i>
                         <span><?= htmlspecialchars($_SESSION['user'] ?? 'User') ?></span>
@@ -65,6 +66,7 @@
                         </a>
                     </div>
                 </div>
+            </div>
             </header>
             <div id="empty-state" class="empty-state"><p>Select a submenu to view.</p></div>
             <div id="workspace" class="workspace hidden">
@@ -589,6 +591,8 @@
         document.getElementById('user-menu-dropdown')?.addEventListener('click', (e) => {
             e.stopPropagation();
         });
+
+
     </script>
     <script src="../shared/theme.js"></script>
 </body>

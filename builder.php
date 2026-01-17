@@ -41,7 +41,7 @@
                 <div class="file-controls">
                     <label>Config File:</label>
                     <input type="text" id="file-input" value="admin_config.json" placeholder="filename.json" readonly style="background-color:var(--bg-card);color:var(--text-muted);cursor:default;">
-                    <button id="browse-btn" class="btn-sm" title="Browse Files"><i class="fa-solid fa-folder-open"></i></button>
+                    <button id="browse-btn" class="btn-sm" title="Browse Files"><i class="fa-solid fa-folder-open"></i> Open</button>
                 </div>
                 <div style="display:flex;gap:5px;">
                     <button id="save-btn" class="btn-primary" style="flex:1;"><i class="fa-solid fa-save"></i> Save</button>

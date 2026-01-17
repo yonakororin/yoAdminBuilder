@@ -292,12 +292,16 @@ body {
     justify-content: space-between;
     padding: 0 1rem;
     background: var(--bg-card);
+    gap: 1rem;
 }
+
 
 .breadcrumbs {
     color: var(--text-muted);
     font-size: 0.9rem;
+    flex: 1;
 }
+
 
 /* User Menu */
 .user-menu {

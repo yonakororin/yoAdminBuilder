@@ -861,6 +861,7 @@ function handleModalConfirm() {
 // EVENT LISTENERS
 // ============================================================
 function setupEventListeners() {
+
     // Brand Title Edit
     document.getElementById('brand-title')?.addEventListener('click', () => {
         const newTitle = prompt('Dashboard Title:', state.brandTitle);
