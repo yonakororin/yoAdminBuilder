@@ -137,17 +137,36 @@ function renderSidebar() {
         div.className = 'menu-item';
         div.innerHTML = `
             <div class="menu-header">
-                <span><i class="fa-solid fa-folder"></i> ${menu.title}</span>
+                <div>
+                    <span><i class="fa-solid fa-folder"></i> ${menu.title}</span>
+                    <i class="fa-solid fa-pen menu-edit" data-id="${menu.id}" title="Rename Menu" style="font-size:0.7rem;margin-left:5px;cursor:pointer;color:var(--text-muted);"></i>
+                </div>
                 <button class="icon-btn add-sub" data-id="${menu.id}"><i class="fa-solid fa-plus"></i></button>
             </div>
             <div class="submenu-list">
                 ${(menu.submenus || []).map(sub => `
-                    <div class="submenu-item ${state.selectedSubmenuId === sub.id ? 'active' : ''}" data-menu="${menu.id}" data-sub="${sub.id}">${sub.title}</div>
+                    <div class="submenu-item ${state.selectedSubmenuId === sub.id ? 'active' : ''}" data-menu="${menu.id}" data-sub="${sub.id}">
+                        <span>${sub.title}</span>
+                        <i class="fa-solid fa-pen submenu-edit" title="Rename Submenu" style="font-size:0.7rem;margin-left:auto;cursor:pointer;color:var(--text-muted);display:none;"></i>
+                    </div>
                 `).join('')}
             </div>
         `;
         menuTreeEl.appendChild(div);
     });
+
+    // Submenu edit icon hover effect
+    document.querySelectorAll('.submenu-item').forEach(el => {
+        const editIcon = el.querySelector('.submenu-edit');
+        if (editIcon) {
+            el.addEventListener('mouseenter', () => editIcon.style.display = 'inline-block');
+            el.addEventListener('mouseleave', () => editIcon.style.display = 'none');
+        }
+    });
+
+    if (state.config.length === 0) {
+        menuTreeEl.innerHTML = '<div style="padding:10px;color:var(--text-muted);text-align:center;">No menus</div>';
+    }
 }
 
 function renderTabs() {
@@ -658,6 +677,39 @@ function setupEventListeners() {
             const sub = getSubmenu();
             if (sub?.tabs?.length > 0) state.activeTabId = sub.tabs[0].id;
             showWorkspace();
+        }
+
+        // Rename Submenu
+        const subEdit = e.target.closest('.submenu-edit');
+        if (subEdit) {
+            e.stopPropagation();
+            const subItem = subEdit.closest('.submenu-item');
+            const menuId = subItem.dataset.menu;
+            const subId = subItem.dataset.sub;
+            const menu = state.config.find(m => m.id === menuId);
+            const sub = menu.submenus.find(s => s.id === subId);
+
+            const newTitle = prompt('Rename Submenu:', sub.title);
+            if (newTitle) {
+                sub.title = newTitle;
+                renderSidebar();
+            }
+            return;
+        }
+
+        // Rename Menu
+        const menuEdit = e.target.closest('.menu-edit');
+        if (menuEdit) {
+            e.stopPropagation();
+            const menuId = menuEdit.dataset.id;
+            const menu = state.config.find(m => m.id === menuId);
+
+            const newTitle = prompt('Rename Menu:', menu.title);
+            if (newTitle) {
+                menu.title = newTitle;
+                renderSidebar();
+            }
+            return;
         }
     });
 
