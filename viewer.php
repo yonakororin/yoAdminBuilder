@@ -171,6 +171,55 @@
                 this.goToPage(tableId, st.page + 1);
             },
             
+            // Get row data by index (global index, not page index)
+            getRowData(tableId, index) {
+                const st = this._getState(tableId);
+                return st.data[index] ?? null;
+            },
+            
+            // Get all data
+            getData(tableId) {
+                const st = this._getState(tableId);
+                return st.data;
+            },
+            
+            // Set action column with buttons
+            // buttons: [{ label: 'Edit', style: 'info', action: 'edit' }, ...]
+            setActionColumn(tableId, columnName, buttons) {
+                const st = this._getState(tableId);
+                st.actionColumn = { name: columnName, buttons: buttons };
+                
+                // Add column if not exists
+                if (!st.columns.includes(columnName)) {
+                    st.columns.push(columnName);
+                    // Update header
+                    const el = document.getElementById(tableId);
+                    if (el) {
+                        const thead = el.querySelector('thead tr');
+                        if (thead) {
+                            thead.innerHTML = st.columns.map(c => `<th>${c}</th>`).join('');
+                        }
+                    }
+                }
+                this.refresh(tableId);
+            },
+            
+            // Set row action handler
+            // handler: function(action, rowData, rowIndex)
+            onRowAction(tableId, handler) {
+                const st = this._getState(tableId);
+                st.actionHandler = handler;
+            },
+            
+            // Internal: Handle action button click
+            _handleAction(tableId, action, globalIndex) {
+                const st = this._getState(tableId);
+                const rowData = st.data[globalIndex];
+                if (st.actionHandler) {
+                    st.actionHandler(action, rowData, globalIndex);
+                }
+            },
+            
             refresh(tableId) {
                 const st = this._getState(tableId);
                 const el = document.getElementById(tableId);
@@ -192,15 +241,25 @@
                 
                 if (tbody) {
                     if (pageData.length === 0) {
-                        tbody.innerHTML = `<tr><td colspan="${st.columns.length}" style="text-align:center;color:var(--text-muted);">No data</td></tr>`;
+                        const colCount = st.columns.length;
+                        tbody.innerHTML = `<tr><td colspan="${colCount}" style="text-align:center;color:var(--text-muted);">No data</td></tr>`;
                     } else {
-                        tbody.innerHTML = pageData.map(row => {
+                        tbody.innerHTML = pageData.map((row, pageIdx) => {
+                            const globalIndex = start + pageIdx;
                             const cells = st.columns.map(col => {
-                                // Support both array (by index) and object (by key) formats
+                                // Check if this is the action column
+                                if (st.actionColumn && col === st.actionColumn.name) {
+                                    const btns = st.actionColumn.buttons.map(btn => {
+                                        const btnClass = btn.style ? `btn-${btn.style}` : '';
+                                        return `<button class="comp-button ${btnClass}" style="padding:4px 8px;font-size:0.75rem;margin:0 2px;" onclick="yoTable._handleAction('${tableId}','${btn.action}',${globalIndex})">${btn.label}</button>`;
+                                    }).join('');
+                                    return `<td>${btns}</td>`;
+                                }
+                                // Regular cell
                                 const val = Array.isArray(row) ? row[st.columns.indexOf(col)] : (row[col] ?? '');
                                 return `<td>${val}</td>`;
                             }).join('');
-                            return `<tr>${cells}</tr>`;
+                            return `<tr data-row-index="${globalIndex}">${cells}</tr>`;
                         }).join('');
                     }
                 }

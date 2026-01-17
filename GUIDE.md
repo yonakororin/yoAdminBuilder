@@ -37,9 +37,62 @@
   - `document.getElementById('loadingOverlay').style.display = 'flex'` で表示。
   - `style.display = 'none'` で非表示。
 
-## 3. JavaScript Helpers
-便利なグローバル関数を利用できます。
+### Table
+- **Setup**:
+  - ツールボックスから「Table」を配置し、**ID** を設定します。
+  - **Columns**: カラム名をカンマ区切りで入力（例: `名前, 年齢, メール`）
+  - **Rows per page**: 1ページに表示する行数
+- **JavaScript API** (`yoTable`): 下記参照
 
+## 3. JavaScript Helpers
+
+### 共通関数
 - `openModal(id)`: IDを指定してモーダルを表示
 - `closeModal(id)`: IDを指定してモーダルを非表示
-- `closeModal(this)`: 内包する親モーダルを自動判別して閉じる（フッターボタン等で使用）
+- `closeModal(this)`: 内包する親モーダルを自動判別して閉じる
+
+### yoTable API（テーブル操作）
+
+#### データ設定
+```javascript
+// データを一括登録
+yoTable.setData('myTable', [
+    { Name: 'John', Age: 30, Email: 'john@example.com' },
+    { Name: 'Jane', Age: 25, Email: 'jane@example.com' }
+]);
+
+// カラムヘッダーを変更
+yoTable.setColumns('myTable', ['名前', '年齢', 'メール']);
+```
+
+#### ページネーション
+```javascript
+yoTable.nextPage('myTable');      // 次のページ
+yoTable.prevPage('myTable');      // 前のページ
+yoTable.goToPage('myTable', 3);   // 3ページ目に移動
+yoTable.refresh('myTable');       // テーブルを再描画
+```
+
+#### アクションボタン（編集・削除等）
+```javascript
+// アクションカラムを追加
+yoTable.setActionColumn('myTable', '操作', [
+    { label: '編集', style: 'info', action: 'edit' },
+    { label: '削除', style: 'danger', action: 'delete' }
+]);
+
+// ボタンクリック時の処理
+yoTable.onRowAction('myTable', (action, rowData, index) => {
+    if (action === 'edit') {
+        console.log('編集:', rowData);
+    } else if (action === 'delete') {
+        // 削除処理
+    }
+});
+```
+
+#### データ取得
+```javascript
+const row = yoTable.getRowData('myTable', 0);  // 特定行
+const all = yoTable.getData('myTable');        // 全データ
+```
