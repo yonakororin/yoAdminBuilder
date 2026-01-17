@@ -915,3 +915,62 @@ label {
     color: var(--text);
     border-radius: 4px;
 }
+
+/* Table Component */
+.comp-table {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.comp-table table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+}
+
+.comp-table th,
+.comp-table td {
+    padding: 8px 12px;
+    text-align: left;
+    border: 1px solid var(--border);
+}
+
+.comp-table th {
+    background: var(--primary);
+    color: white;
+    font-weight: 600;
+}
+
+.comp-table tbody tr:hover {
+    background: var(--bg-hover);
+}
+
+.comp-table-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 10px;
+    padding: 8px;
+    background: var(--bg-card);
+    border-radius: 4px;
+}
+
+.comp-table-pagination button {
+    padding: 6px 12px;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.8rem;
+}
+
+.comp-table-pagination button:hover {
+    background: var(--primary-dark);
+}
+
+.comp-table-pagination .page-info {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}

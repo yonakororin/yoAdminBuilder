@@ -118,6 +118,95 @@
             }
         }
 
+        // yoTable API - for dynamic table manipulation
+        window.yoTable = {
+            _state: {}, // { tableId: { data: [], page: 1, pageSize: 10, columns: [] } }
+            
+            _getState(tableId) {
+                if (!this._state[tableId]) {
+                    const el = document.getElementById(tableId);
+                    this._state[tableId] = {
+                        data: [],
+                        page: 1,
+                        pageSize: parseInt(el?.dataset.pagesize) || 10,
+                        columns: JSON.parse(el?.dataset.columns || '[]')
+                    };
+                }
+                return this._state[tableId];
+            },
+            
+            setData(tableId, data) {
+                const st = this._getState(tableId);
+                st.data = Array.isArray(data) ? data : [];
+                st.page = 1;
+                this.refresh(tableId);
+            },
+            
+            setColumns(tableId, columns) {
+                const st = this._getState(tableId);
+                st.columns = Array.isArray(columns) ? columns : [];
+                const el = document.getElementById(tableId);
+                if (el) {
+                    const thead = el.querySelector('thead tr');
+                    if (thead) {
+                        thead.innerHTML = st.columns.map(c => `<th>${c}</th>`).join('');
+                    }
+                }
+            },
+            
+            goToPage(tableId, page) {
+                const st = this._getState(tableId);
+                const maxPage = Math.ceil(st.data.length / st.pageSize) || 1;
+                st.page = Math.max(1, Math.min(page, maxPage));
+                this.refresh(tableId);
+            },
+            
+            prevPage(tableId) {
+                const st = this._getState(tableId);
+                this.goToPage(tableId, st.page - 1);
+            },
+            
+            nextPage(tableId) {
+                const st = this._getState(tableId);
+                this.goToPage(tableId, st.page + 1);
+            },
+            
+            refresh(tableId) {
+                const st = this._getState(tableId);
+                const el = document.getElementById(tableId);
+                if (!el) return;
+                
+                const tbody = el.querySelector('tbody');
+                const pageInfo = el.querySelector('.page-info');
+                const maxPage = Math.ceil(st.data.length / st.pageSize) || 1;
+                
+                // Update page info
+                if (pageInfo) {
+                    pageInfo.textContent = `Page ${st.page} / ${maxPage}`;
+                }
+                
+                // Render rows for current page
+                const start = (st.page - 1) * st.pageSize;
+                const end = start + st.pageSize;
+                const pageData = st.data.slice(start, end);
+                
+                if (tbody) {
+                    if (pageData.length === 0) {
+                        tbody.innerHTML = `<tr><td colspan="${st.columns.length}" style="text-align:center;color:var(--text-muted);">No data</td></tr>`;
+                    } else {
+                        tbody.innerHTML = pageData.map(row => {
+                            const cells = st.columns.map(col => {
+                                // Support both array (by index) and object (by key) formats
+                                const val = Array.isArray(row) ? row[st.columns.indexOf(col)] : (row[col] ?? '');
+                                return `<td>${val}</td>`;
+                            }).join('');
+                            return `<tr>${cells}</tr>`;
+                        }).join('');
+                    }
+                }
+            }
+        };
+
         // Viewer Mode - Read Only
         const state = { config: [], selectedMenuId: null, selectedSubmenuId: null, activeTabId: null };
 
@@ -314,6 +403,26 @@
                             <div class="comp-loading-text">${comp.loadingText || 'Loading...'}</div>
                         </div>
                     `;
+                case 'table': {
+                    const tableId = comp.customId || 'table-' + comp.id;
+                    const columns = comp.columns || ['Column 1', 'Column 2'];
+                    const pageSize = comp.pageSize || 10;
+                    const headerRow = columns.map(c => `<th>${c}</th>`).join('');
+                    
+                    return `
+                        <div id="${tableId}" class="comp-table" data-pagesize="${pageSize}" data-columns='${JSON.stringify(columns)}'>
+                            <table>
+                                <thead><tr>${headerRow}</tr></thead>
+                                <tbody></tbody>
+                            </table>
+                            <div class="comp-table-pagination">
+                                <button onclick="yoTable.prevPage('${tableId}')">&laquo; Prev</button>
+                                <span class="page-info">Page 1</span>
+                                <button onclick="yoTable.nextPage('${tableId}')">Next &raquo;</button>
+                            </div>
+                        </div>
+                    `;
+                }
                 default:
                     return `<span>${label}</span>`;
             }

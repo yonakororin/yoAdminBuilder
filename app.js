@@ -308,6 +308,21 @@ function getComponentContent(comp) {
                     <div style="font-size:0.7rem;">ID: ${comp.customId || '(No ID)'}</div>
                 </div>
             `;
+        case 'table': {
+            const columns = comp.columns || ['Column 1', 'Column 2', 'Column 3'];
+            const headerRow = columns.map(c => `<th>${c}</th>`).join('');
+            return `
+                <div class="comp-table-preview">
+                    <table style="width:100%;border-collapse:collapse;font-size:0.8rem;">
+                        <thead><tr style="background:var(--primary);color:white;">${headerRow}</tr></thead>
+                        <tbody>
+                            <tr>${columns.map(() => '<td style="padding:4px;border:1px solid var(--border);">...</td>').join('')}</tr>
+                        </tbody>
+                    </table>
+                    <div style="font-size:0.7rem;color:var(--text-muted);margin-top:4px;">ID: ${comp.customId || '(No ID)'} | Page: ${comp.pageSize || 10} rows</div>
+                </div>
+            `;
+        }
         default:
             return `<span>${label}</span>`;
     }
@@ -530,6 +545,20 @@ function openComponentSettings(comp) {
         `;
     }
 
+    // Table specific
+    if (comp.type === 'table') {
+        html += `
+            <div class="settings-group">
+                <label>Columns (comma separated):</label>
+                <input type="text" id="comp-table-columns" placeholder="Name, Age, Email" value="${(comp.columns || []).join(', ')}">
+            </div>
+            <div class="settings-group">
+                <label>Rows per page:</label>
+                <input type="number" id="comp-table-pagesize" min="1" max="100" value="${comp.pageSize || 10}">
+            </div>
+        `;
+    }
+
     // Label position for labeled components
     if (['checkbox', 'toggle', 'input', 'datepicker'].includes(comp.type)) {
         html += `
@@ -682,6 +711,13 @@ function saveComponentState() {
         currentEditComp.checklistMode = document.getElementById('comp-checklist-mode')?.value || 'multi';
         const itemsText = document.getElementById('comp-checklist-items')?.value || '';
         currentEditComp.items = itemsText.split('\n').map(line => line.trim()).filter(line => line !== '');
+    }
+
+    // Table specific
+    if (currentEditComp.type === 'table') {
+        const columnsText = document.getElementById('comp-table-columns')?.value || '';
+        currentEditComp.columns = columnsText.split(',').map(c => c.trim()).filter(c => c !== '');
+        currentEditComp.pageSize = parseInt(document.getElementById('comp-table-pagesize')?.value) || 10;
     }
 
     // Label position

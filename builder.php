@@ -110,6 +110,7 @@
                     <div class="tool" data-type="datepicker" draggable="true"><i class="fa-solid fa-calendar"></i> Calendar</div>
                     <div class="tool" data-type="modal" draggable="true"><i class="fa-regular fa-window-restore"></i> Modal</div>
                     <div class="tool" data-type="loading" draggable="true"><i class="fa-solid fa-spinner"></i> Loading</div>
+                    <div class="tool" data-type="table" draggable="true"><i class="fa-solid fa-table"></i> Table</div>
                 </div>
             </div>
         </main>
