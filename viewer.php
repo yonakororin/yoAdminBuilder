@@ -179,7 +179,10 @@
                         ? `<label class="comp-input ${flexClass}"><input type="text" placeholder="..."><span>${label}</span></label>`
                         : `<label class="comp-input ${flexClass}"><span>${label}</span><input type="text" placeholder="..."></label>`;
                 case 'button':
-                    return `<button class="comp-button">${label}</button>`;
+                    const btnStyle = comp.buttonStyle || 'normal'; 
+                    const disabledAttr = btnStyle === 'disabled' ? 'disabled' : '';
+                    const btnClass = btnStyle !== 'normal' ? `btn-${btnStyle}` : '';
+                    return `<button class="comp-button ${btnClass}" ${disabledAttr}>${label}</button>`;
                 case 'datepicker':
                     const inputType = comp.includeTime ? 'datetime-local' : 'date';
                     return pos === 'right'

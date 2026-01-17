@@ -474,6 +474,42 @@ body {
     background: #2563eb;
 }
 
+.comp-button.btn-info {
+    background: #0ea5e9;
+    /* Sky 500 */
+}
+
+.comp-button.btn-info:hover {
+    background: #0284c7;
+}
+
+.comp-button.btn-danger {
+    background: #ef4444;
+    /* Red 500 */
+}
+
+.comp-button.btn-danger:hover {
+    background: #dc2626;
+}
+
+.comp-button.btn-warning {
+    background: #f59e0b;
+    /* Amber 500 */
+    color: black;
+}
+
+.comp-button.btn-warning:hover {
+    background: #d97706;
+}
+
+.comp-button.btn-disabled,
+.comp-button:disabled {
+    background: var(--bg-hover);
+    color: var(--text-muted);
+    cursor: not-allowed;
+    border: 1px solid var(--border);
+}
+
 /* Toggle Switch */
 .comp-toggle {
     position: relative;

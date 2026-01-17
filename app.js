@@ -213,7 +213,10 @@ function getComponentContent(comp) {
                 ? `<label class="comp-input ${flexClass}"><input type="text" placeholder="..."><span>${label}</span></label>`
                 : `<label class="comp-input ${flexClass}"><span>${label}</span><input type="text" placeholder="..."></label>`;
         case 'button':
-            return `<button class="comp-button">${label}</button>`;
+            const btnStyle = comp.buttonStyle || 'normal'; // normal, info, danger, warning, disabled
+            const disabledAttr = btnStyle === 'disabled' ? 'disabled' : '';
+            const btnClass = btnStyle !== 'normal' ? `btn-${btnStyle}` : '';
+            return `<button class="comp-button ${btnClass}" ${disabledAttr}>${label}</button>`;
         case 'datepicker':
             const inputType = comp.includeTime ? 'datetime-local' : 'date';
             return pos === 'right'
@@ -376,6 +379,22 @@ function openComponentSettings(comp) {
         </div>
     `;
 
+    // Button specific
+    if (comp.type === 'button') {
+        html += `
+            <div class="settings-group">
+                <label>Style:</label>
+                <select id="comp-button-style">
+                    <option value="normal" ${(!comp.buttonStyle || comp.buttonStyle === 'normal') ? 'selected' : ''}>Normal (Blue)</option>
+                    <option value="info" ${(comp.buttonStyle === 'info') ? 'selected' : ''}>Info (Cyan)</option>
+                    <option value="danger" ${(comp.buttonStyle === 'danger') ? 'selected' : ''}>Danger (Red)</option>
+                    <option value="warning" ${(comp.buttonStyle === 'warning') ? 'selected' : ''}>Warning (Orange)</option>
+                    <option value="disabled" ${(comp.buttonStyle === 'disabled') ? 'selected' : ''}>Disabled</option>
+                </select>
+            </div>
+        `;
+    }
+
     // HTML-specific fields
     if (comp.type === 'html') {
         html += `
@@ -493,6 +512,11 @@ function handleModalConfirm() {
     currentEditComp.customId = document.getElementById('comp-custom-id')?.value?.trim() || null;
     currentEditComp.customClass = document.getElementById('comp-custom-class')?.value?.trim() || null;
     currentEditComp.label = document.getElementById('comp-label')?.value?.trim() || currentEditComp.label;
+
+    // Button specific
+    if (currentEditComp.type === 'button') {
+        currentEditComp.buttonStyle = document.getElementById('comp-button-style')?.value || 'normal';
+    }
 
     // HTML specific
     if (currentEditComp.type === 'html') {
