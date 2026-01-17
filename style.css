@@ -150,6 +150,19 @@ body {
     color: white;
 }
 
+.menu-header.menu-toggle {
+    cursor: pointer;
+}
+
+.menu-chevron {
+    display: inline-block;
+    transition: transform 0.2s ease;
+}
+
+.menu-chevron.expanded {
+    transform: rotate(90deg);
+}
+
 .submenu-list {
     margin-left: 1rem;
     border-left: 1px solid var(--border);

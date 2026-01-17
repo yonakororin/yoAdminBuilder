@@ -298,6 +298,7 @@
             el.innerHTML = state.config.map(m => {
                 const hasDirectTabs = m.tabs && m.tabs.length > 0 && (!m.submenus || m.submenus.length === 0);
                 const isSelected = state.selectedMenuId === m.id && !state.selectedSubmenuId;
+                const isExpanded = state.selectedMenuId === m.id;
                 
                 if (hasDirectTabs) {
                     return `
@@ -310,8 +311,13 @@
                 } else {
                     return `
                         <div class="menu-item">
-                            <div class="menu-header"><span><i class="fa-solid fa-folder"></i> ${m.title}</span></div>
-                            <div class="submenu-list">
+                            <div class="menu-header menu-toggle" data-menu="${m.id}">
+                                <div>
+                                    <i class="fa-solid fa-chevron-right menu-chevron ${isExpanded ? 'expanded' : ''}" style="font-size:0.6rem;margin-right:5px;"></i>
+                                    <span><i class="fa-solid fa-folder"></i> ${m.title}</span>
+                                </div>
+                            </div>
+                            <div class="submenu-list" style="${isExpanded ? '' : 'display:none;'}">
                                 ${(m.submenus || []).map(s => `<div class="submenu-item ${state.selectedSubmenuId === s.id ? 'active' : ''}" data-menu="${m.id}" data-sub="${s.id}">${s.title}</div>`).join('')}
                             </div>
                         </div>
@@ -338,6 +344,20 @@
                     const sub = getSubmenu();
                     if (sub?.tabs?.length) state.activeTabId = sub.tabs[0].id;
                     showWorkspace();
+                };
+            });
+
+            // Click handler for menu toggle (expand/collapse)
+            el.querySelectorAll('.menu-toggle').forEach(item => {
+                item.onclick = () => {
+                    const menuItem = item.closest('.menu-item');
+                    const submenuList = menuItem.querySelector('.submenu-list');
+                    const chevron = item.querySelector('.menu-chevron');
+                    if (submenuList) {
+                        const isHidden = submenuList.style.display === 'none';
+                        submenuList.style.display = isHidden ? 'block' : 'none';
+                        if (chevron) chevron.classList.toggle('expanded', isHidden);
+                    }
                 };
             });
         }

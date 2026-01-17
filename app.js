@@ -173,17 +173,19 @@ function renderSidebar() {
                 </div>
             `;
         } else {
-            // Menu with submenus - expandable
+            // Menu with submenus - collapsible
+            const isExpanded = state.selectedMenuId === menu.id;
             div.innerHTML = `
-                <div class="menu-header">
+                <div class="menu-header menu-toggle" data-menu="${menu.id}">
                     <div>
+                        <i class="fa-solid fa-chevron-right menu-chevron ${isExpanded ? 'expanded' : ''}" style="font-size:0.6rem;margin-right:5px;transition:transform 0.2s;"></i>
                         <span><i class="fa-solid fa-folder"></i> ${menu.title}</span>
                         <i class="fa-solid fa-pen menu-edit" data-id="${menu.id}" title="Rename Menu" style="font-size:0.7rem;margin-left:5px;cursor:pointer;color:var(--text-muted);"></i>
                         <i class="fa-solid fa-trash menu-delete" data-id="${menu.id}" title="Delete Menu" style="font-size:0.7rem;margin-left:5px;cursor:pointer;color:var(--text-muted);"></i>
                     </div>
                     <button class="icon-btn add-sub" data-id="${menu.id}"><i class="fa-solid fa-plus"></i></button>
                 </div>
-                <div class="submenu-list">
+                <div class="submenu-list" style="${isExpanded ? '' : 'display:none;'}">
                     ${(menu.submenus || []).map(sub => `
                         <div class="submenu-item ${state.selectedSubmenuId === sub.id ? 'active' : ''}" data-menu="${menu.id}" data-sub="${sub.id}">
                             <span>${sub.title}</span>
@@ -210,6 +212,21 @@ function renderSidebar() {
             if (menu?.tabs?.length) state.activeTabId = menu.tabs[0].id;
             renderSidebar();
             showWorkspace();
+        });
+    });
+
+    // Click handler for menu toggle (expand/collapse submenus)
+    document.querySelectorAll('.menu-toggle').forEach(el => {
+        el.addEventListener('click', (e) => {
+            if (e.target.closest('.menu-edit') || e.target.closest('.menu-delete') || e.target.closest('.add-sub')) return;
+            const menuItem = el.closest('.menu-item');
+            const submenuList = menuItem.querySelector('.submenu-list');
+            const chevron = el.querySelector('.menu-chevron');
+            if (submenuList) {
+                const isHidden = submenuList.style.display === 'none';
+                submenuList.style.display = isHidden ? 'block' : 'none';
+                if (chevron) chevron.classList.toggle('expanded', isHidden);
+            }
         });
     });
 
