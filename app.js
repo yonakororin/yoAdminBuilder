@@ -395,11 +395,13 @@ function getComponentContent(comp) {
             const columns = comp.columns || ['Column 1', 'Column 2', 'Column 3'];
             const headerRow = columns.map(c => `<th>${c}</th>`).join('');
             return `
-                <div class="comp-table-preview">
+                <div class="comp-table-preview" style="width:100%;">
                     <table style="width:100%;border-collapse:collapse;font-size:0.8rem;">
                         <thead><tr style="background:var(--primary);color:white;">${headerRow}</tr></thead>
                         <tbody>
-                            <tr>${columns.map(() => '<td style="padding:4px;border:1px solid var(--border);">...</td>').join('')}</tr>
+                            ${Array(Number(comp.pageSize) || 10).fill(0).map(() =>
+                `<tr>${columns.map(() => '<td style="padding:4px;border:1px solid var(--border);height:20px;">...</td>').join('')}</tr>`
+            ).join('')}
                         </tbody>
                     </table>
                     <div style="font-size:0.7rem;color:var(--text-muted);margin-top:4px;">ID: ${comp.customId || '(No ID)'} | Page: ${comp.pageSize || 10} rows</div>
