@@ -447,6 +447,7 @@ body {
     border-radius: 4px;
     color: var(--text);
     font-size: 0.75rem;
+    margin-bottom: 0;
 }
 
 .comp-button {
