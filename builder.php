@@ -31,8 +31,9 @@
     <div id="app">
         <!-- Sidebar -->
         <aside class="sidebar">
-            <div class="brand">
-                <a href="index.php" style="color:inherit;text-decoration:none;"><i class="fa-solid fa-shapes"></i> yoAdmin</a>
+            <div class="brand" id="brand-title" style="cursor:pointer;" title="Click to edit title">
+                <i class="fa-solid fa-shapes"></i> <span id="brand-text">yoAdmin</span>
+                <i class="fa-solid fa-pen" style="font-size:0.6rem;margin-left:5px;color:var(--text-muted);"></i>
             </div>
             <button id="add-menu-btn" class="btn-add"><i class="fa-solid fa-plus"></i> Add Menu</button>
             <div id="menu-tree" class="menu-tree"></div>

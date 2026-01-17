@@ -267,14 +267,29 @@
         };
 
         // Viewer Mode - Read Only
-        const state = { config: [], selectedMenuId: null, selectedSubmenuId: null, activeTabId: null };
+        const state = { config: [], brandTitle: 'yoAdmin', selectedMenuId: null, selectedSubmenuId: null, activeTabId: null };
 
         async function init() {
             const file = new URLSearchParams(location.search).get('config') || localStorage.getItem('yoAdminTargetFile') || 'admin_config.json';
             try {
                 const res = await fetch(`api.php?file=${file}`);
-                if (res.ok) state.config = await res.json();
+                if (res.ok) {
+                    const data = await res.json();
+                    // Support both old format (array) and new format (object with menus/brandTitle)
+                    if (Array.isArray(data)) {
+                        state.config = data;
+                        state.brandTitle = 'yoAdmin';
+                    } else {
+                        state.config = data.menus || [];
+                        state.brandTitle = data.brandTitle || 'yoAdmin';
+                    }
+                }
             } catch (e) { console.error(e); }
+            
+            // Update brand title
+            const brandEl = document.querySelector('.brand a');
+            if (brandEl) brandEl.innerHTML = `<i class="fa-solid fa-shapes"></i> ${state.brandTitle}`;
+            
             renderSidebar();
         }
 

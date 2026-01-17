@@ -7,6 +7,7 @@
 // --- State ---
 const state = {
     config: [],
+    brandTitle: 'yoAdmin',
     selectedMenuId: null,
     selectedSubmenuId: null,
     activeTabId: null,
@@ -59,15 +60,29 @@ async function loadConfigFile(filename) {
     try {
         const res = await fetch(`api.php?file=${encodeURIComponent(filename)}`);
         if (res.ok) {
-            state.config = await res.json();
+            const data = await res.json();
+            // Support both old format (array) and new format (object with menus/brandTitle)
+            if (Array.isArray(data)) {
+                state.config = data;
+                state.brandTitle = 'yoAdmin';
+            } else {
+                state.config = data.menus || [];
+                state.brandTitle = data.brandTitle || 'yoAdmin';
+            }
         } else {
             console.warn('File not found or empty, starting with empty config');
             state.config = [];
+            state.brandTitle = 'yoAdmin';
         }
     } catch (e) {
         console.error('Load failed:', e);
         state.config = [];
+        state.brandTitle = 'yoAdmin';
     }
+
+    // Update brand text
+    const brandTextEl = document.getElementById('brand-text');
+    if (brandTextEl) brandTextEl.textContent = state.brandTitle;
 
     // Reset selection
     state.selectedMenuId = null;
@@ -109,7 +124,12 @@ async function saveConfig(targetFilename = null) {
     try {
         const formData = new FormData();
         formData.append('filename', filename);
-        formData.append('config', JSON.stringify(state.config));
+        // Save in new format with brandTitle and menus
+        const configData = {
+            brandTitle: state.brandTitle,
+            menus: state.config
+        };
+        formData.append('config', JSON.stringify(configData));
         const res = await fetch('api.php', { method: 'POST', body: formData });
         const json = await res.json();
 
@@ -811,6 +831,16 @@ function handleModalConfirm() {
 // EVENT LISTENERS
 // ============================================================
 function setupEventListeners() {
+    // Brand Title Edit
+    document.getElementById('brand-title')?.addEventListener('click', () => {
+        const newTitle = prompt('Dashboard Title:', state.brandTitle);
+        if (newTitle && newTitle.trim()) {
+            state.brandTitle = newTitle.trim();
+            const brandTextEl = document.getElementById('brand-text');
+            if (brandTextEl) brandTextEl.textContent = state.brandTitle;
+        }
+    });
+
     // Add Menu
     document.getElementById('add-menu-btn').addEventListener('click', () => {
         const title = prompt('Menu title:');
