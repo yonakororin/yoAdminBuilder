@@ -35,7 +35,24 @@
   - テキスト（"Processing..." 等）を編集可能です。
 - **Control**:
   - `document.getElementById('loadingOverlay').style.display = 'flex'` で表示。
-  - `style.display = 'none'` で非表示。
+  - `document.getElementById('loadingOverlay').style.display = 'none'` で非表示。
+
+**使用例（API呼び出し時）:**
+```javascript
+async function fetchData() {
+    // ローディング表示
+    document.getElementById('loadingOverlay').style.display = 'flex';
+    
+    try {
+        const res = await fetch('/api/data');
+        const data = await res.json();
+        // データ処理...
+    } finally {
+        // ローディング非表示
+        document.getElementById('loadingOverlay').style.display = 'none';
+    }
+}
+```
 
 ### Table
 - **Setup**:
