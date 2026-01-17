@@ -140,6 +140,7 @@ function renderSidebar() {
                 <div>
                     <span><i class="fa-solid fa-folder"></i> ${menu.title}</span>
                     <i class="fa-solid fa-pen menu-edit" data-id="${menu.id}" title="Rename Menu" style="font-size:0.7rem;margin-left:5px;cursor:pointer;color:var(--text-muted);"></i>
+                    <i class="fa-solid fa-trash menu-delete" data-id="${menu.id}" title="Delete Menu" style="font-size:0.7rem;margin-left:5px;cursor:pointer;color:var(--text-muted);"></i>
                 </div>
                 <button class="icon-btn add-sub" data-id="${menu.id}"><i class="fa-solid fa-plus"></i></button>
             </div>
@@ -147,7 +148,10 @@ function renderSidebar() {
                 ${(menu.submenus || []).map(sub => `
                     <div class="submenu-item ${state.selectedSubmenuId === sub.id ? 'active' : ''}" data-menu="${menu.id}" data-sub="${sub.id}">
                         <span>${sub.title}</span>
-                        <i class="fa-solid fa-pen submenu-edit" title="Rename Submenu" style="font-size:0.7rem;margin-left:auto;cursor:pointer;color:var(--text-muted);display:none;"></i>
+                        <div class="sub-actions" style="margin-left:auto;display:none;">
+                            <i class="fa-solid fa-pen submenu-edit" title="Rename Submenu" style="font-size:0.7rem;margin-right:5px;cursor:pointer;color:var(--text-muted);"></i>
+                            <i class="fa-solid fa-trash submenu-delete" title="Delete Submenu" style="font-size:0.7rem;cursor:pointer;color:var(--text-muted);"></i>
+                        </div>
                     </div>
                 `).join('')}
             </div>
@@ -155,12 +159,12 @@ function renderSidebar() {
         menuTreeEl.appendChild(div);
     });
 
-    // Submenu edit icon hover effect
+    // Submenu edit/delete icon hover effect
     document.querySelectorAll('.submenu-item').forEach(el => {
-        const editIcon = el.querySelector('.submenu-edit');
-        if (editIcon) {
-            el.addEventListener('mouseenter', () => editIcon.style.display = 'inline-block');
-            el.addEventListener('mouseleave', () => editIcon.style.display = 'none');
+        const actions = el.querySelector('.sub-actions');
+        if (actions) {
+            el.addEventListener('mouseenter', () => actions.style.display = 'inline-block');
+            el.addEventListener('mouseleave', () => actions.style.display = 'none');
         }
     });
 
@@ -708,6 +712,53 @@ function setupEventListeners() {
             if (newTitle) {
                 menu.title = newTitle;
                 renderSidebar();
+            }
+            return;
+        }
+
+        // Delete Submenu
+        const subDelete = e.target.closest('.submenu-delete');
+        if (subDelete) {
+            e.stopPropagation();
+            const subItem = subDelete.closest('.submenu-item');
+            const menuId = subItem.dataset.menu;
+            const subId = subItem.dataset.sub;
+            const menu = state.config.find(m => m.id === menuId);
+
+            if (confirm('Delete this submenu?')) {
+                menu.submenus = menu.submenus.filter(s => s.id !== subId);
+                // Reset active states if deleted one was active
+                if (state.selectedSubmenuId === subId) {
+                    state.selectedSubmenuId = null;
+                    state.activeTabId = null;
+                    // Try to fallback
+                    if (menu.submenus.length > 0) {
+                        state.selectedSubmenuId = menu.submenus[0].id;
+                        if (menu.submenus[0].tabs.length > 0) state.activeTabId = menu.submenus[0].tabs[0].id;
+                    }
+                }
+                renderSidebar();
+                showWorkspace(); // To update visibility
+            }
+            return;
+        }
+
+        // Delete Menu
+        const menuDelete = e.target.closest('.menu-delete');
+        if (menuDelete) {
+            e.stopPropagation();
+            const menuId = menuDelete.dataset.id;
+
+            if (confirm('Delete this entire menu?')) {
+                state.config = state.config.filter(m => m.id !== menuId);
+                // If deleted menu contained active submenu, reset
+                if (state.selectedMenuId === menuId) {
+                    state.selectedMenuId = null;
+                    state.selectedSubmenuId = null;
+                    state.activeTabId = null;
+                }
+                renderSidebar();
+                showWorkspace();
             }
             return;
         }
