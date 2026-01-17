@@ -347,14 +347,26 @@
                 };
             });
 
-            // Click handler for menu toggle (expand/collapse)
+            // Click handler for menu toggle (expand/collapse) - accordion style
             el.querySelectorAll('.menu-toggle').forEach(item => {
                 item.onclick = () => {
                     const menuItem = item.closest('.menu-item');
                     const submenuList = menuItem.querySelector('.submenu-list');
                     const chevron = item.querySelector('.menu-chevron');
+                    const isHidden = submenuList?.style.display === 'none';
+                    
+                    // Accordion: collapse all other menus first
+                    el.querySelectorAll('.menu-item').forEach(otherItem => {
+                        if (otherItem !== menuItem) {
+                            const otherList = otherItem.querySelector('.submenu-list');
+                            const otherChevron = otherItem.querySelector('.menu-chevron');
+                            if (otherList) otherList.style.display = 'none';
+                            if (otherChevron) otherChevron.classList.remove('expanded');
+                        }
+                    });
+                    
+                    // Toggle clicked menu
                     if (submenuList) {
-                        const isHidden = submenuList.style.display === 'none';
                         submenuList.style.display = isHidden ? 'block' : 'none';
                         if (chevron) chevron.classList.toggle('expanded', isHidden);
                     }

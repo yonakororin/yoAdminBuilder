@@ -215,15 +215,27 @@ function renderSidebar() {
         });
     });
 
-    // Click handler for menu toggle (expand/collapse submenus)
+    // Click handler for menu toggle (expand/collapse submenus) - accordion style
     document.querySelectorAll('.menu-toggle').forEach(el => {
         el.addEventListener('click', (e) => {
             if (e.target.closest('.menu-edit') || e.target.closest('.menu-delete') || e.target.closest('.add-sub')) return;
             const menuItem = el.closest('.menu-item');
             const submenuList = menuItem.querySelector('.submenu-list');
             const chevron = el.querySelector('.menu-chevron');
+            const isHidden = submenuList?.style.display === 'none';
+
+            // Accordion: collapse all other menus first
+            document.querySelectorAll('.menu-item').forEach(item => {
+                if (item !== menuItem) {
+                    const otherList = item.querySelector('.submenu-list');
+                    const otherChevron = item.querySelector('.menu-chevron');
+                    if (otherList) otherList.style.display = 'none';
+                    if (otherChevron) otherChevron.classList.remove('expanded');
+                }
+            });
+
+            // Toggle clicked menu
             if (submenuList) {
-                const isHidden = submenuList.style.display === 'none';
                 submenuList.style.display = isHidden ? 'block' : 'none';
                 if (chevron) chevron.classList.toggle('expanded', isHidden);
             }
