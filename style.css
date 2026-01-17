@@ -355,18 +355,28 @@ body {
 
 .item-header {
     height: 24px;
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(59, 130, 246, 0.9);
     cursor: grab;
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 10px;
-    color: var(--text-muted);
+    color: white;
+    position: absolute;
+    /* Overlay */
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 10;
+    opacity: 0;
+    /* Hidden by default */
+    transition: opacity 0.2s;
+    border-radius: 6px 6px 0 0;
 }
 
 .grid-item:hover .item-header {
-    background: var(--primary);
-    color: white;
+    opacity: 1;
+    /* Show on hover */
 }
 
 .item-edit,
@@ -403,7 +413,7 @@ body {
     font-size: 0.8rem;
     overflow: hidden;
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: flex-start;
 }
 
@@ -418,7 +428,7 @@ body {
     justify-content: flex-start;
     gap: 0.5rem;
     width: 100%;
-    margin: auto 0;
+    margin: 0;
     /* Vertical center in parent */
 }
 
