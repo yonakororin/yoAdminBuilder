@@ -72,6 +72,21 @@
     </div>
 
     <script>
+        // Global helpers via window
+        window.openModal = function(id) {
+            const el = document.getElementById(id);
+            if(el) el.style.display = 'flex';
+        };
+        window.closeModal = function(arg) {
+            if (typeof arg === 'string') {
+                const el = document.getElementById(arg);
+                if(el) el.style.display = 'none';
+            } else if (arg instanceof Element) {
+                const overlay = arg.closest('.comp-modal-overlay');
+                if(overlay) overlay.style.display = 'none';
+            }
+        };
+
         // Viewer Mode - Read Only
         const state = { config: [], selectedMenuId: null, selectedSubmenuId: null, activeTabId: null };
 
@@ -135,7 +150,9 @@
             const t = s?.tabs?.find(x => x.id === state.activeTabId);
             const g = document.getElementById('grid');
             g.innerHTML = (t?.components || []).map(c => {
-                const customId = c.customId ? `id="${c.customId}"` : '';
+                // For modal/loading, putting ID on wrapper causes collision with overlay ID.
+                const isOverlay = c.type === 'modal' || c.type === 'loading';
+                const customId = (c.customId && !isOverlay) ? `id="${c.customId}"` : '';
                 const customClass = c.customClass ? c.customClass : '';
                 return `
                 <div class="grid-item ${customClass}" ${customId} style="grid-column:${(c.x||0)+1}/span ${c.w||4};grid-row:${(c.y||0)+1}/span ${c.h||2}">
@@ -182,7 +199,8 @@
                     const btnStyle = comp.buttonStyle || 'normal'; 
                     const disabledAttr = btnStyle === 'disabled' ? 'disabled' : '';
                     const btnClass = btnStyle !== 'normal' ? `btn-${btnStyle}` : '';
-                    return `<button class="comp-button ${btnClass}" ${disabledAttr}>${label}</button>`;
+                    const onClickAttr = comp.onClick ? `onclick="${comp.onClick.replace(/"/g, '&quot;')}"` : '';
+                    return `<button class="comp-button ${btnClass}" ${disabledAttr} ${onClickAttr}>${label}</button>`;
                 case 'datepicker':
                     const inputType = comp.includeTime ? 'datetime-local' : 'date';
                     return pos === 'right'
@@ -212,6 +230,31 @@
                         </div>
                     `;
                 }
+                case 'modal':
+                    const footerBtns = (comp.modalButtons || []).map(b => {
+                        const style = b.style || 'normal';
+                        const btnClass = style !== 'normal' ? `btn-${style}` : '';
+                        const onClick = b.onClick ? `onclick="${b.onClick.replace(/"/g, '&quot;')}"` : '';
+                        return `<button class="comp-button ${btnClass}" ${onClick}>${b.label}</button>`;
+                    }).join('');
+                    const footerHtml = footerBtns ? `<div class="comp-modal-footer">${footerBtns}</div>` : '';
+
+                    return `
+                        <div id="${comp.customId || ''}" class="comp-modal-overlay">
+                            <div class="comp-modal-content">
+                                <button class="comp-modal-close" onclick="this.closest('.comp-modal-overlay').style.display='none'">&times;</button>
+                                ${comp.content || ''}
+                                ${footerHtml}
+                            </div>
+                        </div>
+                    `;
+                case 'loading':
+                    return `
+                        <div id="${comp.customId || ''}" class="comp-loading-overlay">
+                            <i class="fa-solid fa-spinner fa-spin"></i>
+                            <div class="comp-loading-text">${comp.loadingText || 'Loading...'}</div>
+                        </div>
+                    `;
                 default:
                     return `<span>${label}</span>`;
             }

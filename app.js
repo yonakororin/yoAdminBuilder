@@ -216,7 +216,8 @@ function getComponentContent(comp) {
             const btnStyle = comp.buttonStyle || 'normal'; // normal, info, danger, warning, disabled
             const disabledAttr = btnStyle === 'disabled' ? 'disabled' : '';
             const btnClass = btnStyle !== 'normal' ? `btn-${btnStyle}` : '';
-            return `<button class="comp-button ${btnClass}" ${disabledAttr}>${label}</button>`;
+            const onClickAttr = comp.onClick ? `onclick="${comp.onClick.replace(/"/g, '&quot;')}"` : '';
+            return `<button class="comp-button ${btnClass}" ${disabledAttr} ${onClickAttr}>${label}</button>`;
         case 'datepicker':
             const inputType = comp.includeTime ? 'datetime-local' : 'date';
             return pos === 'right'
@@ -246,6 +247,22 @@ function getComponentContent(comp) {
                 </div>
             `;
         }
+        case 'modal':
+            return `
+                <div class="comp-placeholder">
+                    <i class="fa-regular fa-window-restore" style="font-size:1.5rem;margin-bottom:0.5rem;"></i>
+                    <div style="font-weight:600;">MODAL: ${label}</div>
+                    <div style="font-size:0.7rem;">ID: ${comp.customId || '(No ID)'}</div>
+                </div>
+            `;
+        case 'loading':
+            return `
+                <div class="comp-placeholder">
+                    <i class="fa-solid fa-spinner" style="font-size:1.5rem;margin-bottom:0.5rem;"></i>
+                    <div style="font-weight:600;">LOADING</div>
+                    <div style="font-size:0.7rem;">ID: ${comp.customId || '(No ID)'}</div>
+                </div>
+            `;
         default:
             return `<span>${label}</span>`;
     }
@@ -392,14 +409,18 @@ function openComponentSettings(comp) {
                     <option value="disabled" ${(comp.buttonStyle === 'disabled') ? 'selected' : ''}>Disabled</option>
                 </select>
             </div>
+            <div class="settings-group">
+                <label>OnClick (JS):</label>
+                <input type="text" id="comp-button-onclick" placeholder="alert('Hello')" value="${(comp.onClick || '').replace(/"/g, '&quot;')}">
+            </div>
         `;
     }
 
-    // HTML-specific fields
-    if (comp.type === 'html') {
+    // HTML-specific fields (and Modal)
+    if (comp.type === 'html' || comp.type === 'modal') {
         html += `
             <div class="settings-group">
-                <label>Source:</label>
+                <label>${comp.type === 'modal' ? 'Modal Content (HTML):' : 'Source:'}</label>
                 <div class="html-editor-tabs">
                     <button class="html-tab ${!comp.content ? 'active' : ''}" data-mode="file">File Path</button>
                     <button class="html-tab ${comp.content ? 'active' : ''}" data-mode="direct">Direct Edit</button>
@@ -412,6 +433,27 @@ function openComponentSettings(comp) {
             <div id="direct-mode" class="editor-mode ${comp.content ? '' : 'hidden'}">
                 <label>HTML Content:</label>
                 <textarea id="html-direct-content" rows="8">${comp.content || ''}</textarea>
+            </div>
+        `;
+    }
+
+    if (comp.type === 'modal') {
+        html += `
+            <div class="settings-group">
+                <label>Footer Buttons (Label | Style | OnClick) - One per line:</label>
+                <textarea id="comp-modal-buttons" rows="3" placeholder="Close | normal | close()">${(comp.modalButtons || []).map(b => `${b.label} | ${b.style} | ${b.onClick}`).join('\n')}</textarea>
+                <small style="color:var(--text-muted);display:block;margin-top:4px;">Styles: normal, info, danger, warning, disabled</small>
+            </div>
+        `;
+    }
+
+    // Loading specific
+    if (comp.type === 'loading') {
+
+        html += `
+            <div class="settings-group">
+                <label>Loading Text (optional):</label>
+                <input type="text" id="comp-loading-text" placeholder="Processing..." value="${comp.loadingText || ''}">
             </div>
         `;
     }
@@ -473,8 +515,8 @@ function openComponentSettings(comp) {
 
     modalEl.classList.remove('hidden');
 
-    // Initialize CodeMirror for HTML type
-    if (comp.type === 'html') {
+    // Initialize CodeMirror for HTML/Modal type
+    if (comp.type === 'html' || comp.type === 'modal') {
         const textarea = document.getElementById('html-direct-content');
         if (textarea && typeof CodeMirror !== 'undefined') {
             codeMirrorInstance = CodeMirror.fromTextArea(textarea, {
@@ -516,10 +558,11 @@ function handleModalConfirm() {
     // Button specific
     if (currentEditComp.type === 'button') {
         currentEditComp.buttonStyle = document.getElementById('comp-button-style')?.value || 'normal';
+        currentEditComp.onClick = document.getElementById('comp-button-onclick')?.value || '';
     }
 
-    // HTML specific
-    if (currentEditComp.type === 'html') {
+    // HTML/Modal specific
+    if (currentEditComp.type === 'html' || currentEditComp.type === 'modal') {
         const filePath = document.getElementById('html-file-path')?.value?.trim();
         // Get content from CodeMirror if available, otherwise from textarea
         const directContent = codeMirrorInstance ? codeMirrorInstance.getValue() : document.getElementById('html-direct-content')?.value;
@@ -530,6 +573,23 @@ function handleModalConfirm() {
             currentEditComp.content = directContent;
             currentEditComp.filePath = null;
         }
+
+        if (currentEditComp.type === 'modal') {
+            const btnsText = document.getElementById('comp-modal-buttons')?.value || '';
+            currentEditComp.modalButtons = btnsText.split('\n').filter(line => line.trim()).map(line => {
+                const parts = line.split('|').map(p => p.trim());
+                return {
+                    label: parts[0] || 'Button',
+                    style: parts[1] || 'normal',
+                    onClick: parts[2] || ''
+                };
+            });
+        }
+    }
+
+    // Loading specific
+    if (currentEditComp.type === 'loading') {
+        currentEditComp.loadingText = document.getElementById('comp-loading-text')?.value?.trim() || '';
     }
 
     // DatePicker specific

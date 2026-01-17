@@ -100,6 +100,8 @@
                     <div class="tool" data-type="checklist" draggable="true"><i class="fa-solid fa-list-check"></i> Checklist</div>
                     <div class="tool" data-type="input" draggable="true"><i class="fa-solid fa-keyboard"></i> Input</div>
                     <div class="tool" data-type="datepicker" draggable="true"><i class="fa-solid fa-calendar"></i> Calendar</div>
+                    <div class="tool" data-type="modal" draggable="true"><i class="fa-regular fa-window-restore"></i> Modal</div>
+                    <div class="tool" data-type="loading" draggable="true"><i class="fa-solid fa-spinner"></i> Loading</div>
                 </div>
             </div>
         </main>
