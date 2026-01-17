@@ -37,40 +37,68 @@ let codeMirrorInstance = null; // CodeMirror editor instance
 // INITIALIZATION
 // ============================================================
 async function init() {
-    await loadConfig();
+    await initLoad();
     renderSidebar();
     setupEventListeners();
 }
 
-async function loadConfig() {
+
+// Core load logic
+async function loadConfigFile(filename) {
+    console.log('Loading config:', filename);
+    state.targetFile = filename;
+    fileInputEl.value = filename;
+    localStorage.setItem('yoAdminTargetFile', filename);
+
+    // Update URL without reload
+    const newUrl = new URL(window.location);
+    newUrl.searchParams.set('config', filename);
+    window.history.pushState({ path: newUrl.href }, '', newUrl.href);
+
     try {
-        // Prioritize URL param > Input Value (if changed by user, but init calls this once) > LocalStorage > Default
-        // On init, input value is default "admin_config.json". We should check URL first.
-        const urlParams = new URLSearchParams(window.location.search);
-        const urlConfig = urlParams.get('config');
-
-        // If URL has config, use it. Otherwise fall back to storage or default.
-        // We ignore fileInputEl.value on initial load because it has a hardcoded default.
-        const file = urlConfig || localStorage.getItem('yoAdminTargetFile') || 'admin_config.json';
-
-        state.targetFile = file;
-        fileInputEl.value = file;
-        localStorage.setItem('yoAdminTargetFile', file);
-
-        const res = await fetch(`api.php?file=${file}`);
+        const res = await fetch(`api.php?file=${encodeURIComponent(filename)}`);
         if (res.ok) {
             state.config = await res.json();
         } else {
+            console.warn('File not found or empty, starting with empty config');
             state.config = [];
         }
-        // Reset selection on load
-        state.selectedMenuId = null;
-        state.selectedSubmenuId = null;
-        state.activeTabId = null;
     } catch (e) {
         console.error('Load failed:', e);
         state.config = [];
     }
+
+    // Reset selection
+    state.selectedMenuId = null;
+    state.selectedSubmenuId = null;
+    state.activeTabId = null;
+
+    renderSidebar();
+
+    // Reset UI to empty state
+    emptyStateEl.classList.remove('hidden');
+    workspaceEl.classList.add('hidden');
+    toolboxEl.classList.add('hidden');
+    breadcrumbsEl.textContent = 'Select a submenu';
+}
+
+async function initLoad() {
+    // 1. URL Param
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlConfig = urlParams.get('config');
+
+    // 2. Input Value (default) or LocalStorage
+    // Note: On fresh load, input value is 'admin_config.json' from HTML. 
+    // If URL is present, use it. Else check storage. Else default.
+    const file = urlConfig || localStorage.getItem('yoAdminTargetFile') || fileInputEl.value || 'admin_config.json';
+
+    await loadConfigFile(file);
+}
+
+async function manualLoad() {
+    const file = fileInputEl.value;
+    if (!file) return;
+    await loadConfigFile(file);
 }
 
 async function saveConfig() {
@@ -562,17 +590,12 @@ function setupEventListeners() {
     // Save
     document.getElementById('save-btn').addEventListener('click', saveConfig);
 
-    // Load
-    document.getElementById('load-btn').addEventListener('click', async () => {
-        if (confirm('Load will discard unsaved changes. Continue?')) {
-            await loadConfig();
-            renderSidebar();
-            emptyStateEl.classList.remove('hidden');
-            workspaceEl.classList.add('hidden');
-            toolboxEl.classList.add('hidden');
-            breadcrumbsEl.textContent = 'Select a submenu';
-        }
-    });
+
+    // Save
+    document.getElementById('save-btn').addEventListener('click', saveConfig);
+
+    // Browse
+    document.getElementById('browse-btn').addEventListener('click', openFileBrowserModal);
 
     // Modal close
     document.getElementById('modal-close').addEventListener('click', closeModal);
@@ -827,6 +850,91 @@ function openModal(title, bodyHtml) {
 
 function closeModal() {
     modalEl.classList.add('hidden');
+}
+
+// ============================================================
+// FILE BROWSER MODAL
+// ============================================================
+async function openFileBrowserModal() {
+    openModal('Browse Files', `
+        <div class="browser-bar" style="margin-bottom:1rem;display:flex;gap:10px;align-items:center;">
+            <button id="modal-browser-up" class="btn-sm"><i class="fa-solid fa-level-up-alt"></i> Up</button>
+            <div id="modal-path-display" style="font-family:monospace;font-size:0.9rem;color:var(--text-muted);">Loading...</div>
+        </div>
+        <div id="modal-file-list" style="height:300px;overflow-y:auto;border:1px solid var(--border);border-radius:4px;padding:10px;">
+            Loading...
+        </div>
+    `);
+
+    // Hide default modal buttons for this custom view if desired, or reuse them. 
+    // We'll hide the OK/Cancel footer for now or assume they are just for closing?
+    // Actually our openModal puts content in body. Footer remains.
+    // Let's modify loadPath logic to populate this.
+
+    const listEl = document.getElementById('modal-file-list');
+    const pathEl = document.getElementById('modal-path-display');
+    const upBtn = document.getElementById('modal-browser-up');
+
+    let currentPath = '';
+
+    async function loadPath(path = '') {
+        try {
+            const res = await fetch(`api.php?action=browse&path=${encodeURIComponent(path)}`);
+            const data = await res.json();
+
+            currentPath = data.current_path;
+            pathEl.textContent = currentPath;
+            listEl.innerHTML = '';
+
+            // Up button logic
+            upBtn.onclick = () => loadPath(currentPath + '/..');
+
+            if (data.items.length === 0) {
+                listEl.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:1rem;">No JSON files found</div>';
+                return;
+            }
+
+            // Grid style for modal? or list? List is better for small modal.
+            data.items.forEach(item => {
+                const row = document.createElement('div');
+                row.style.cssText = 'padding:5px 10px;cursor:pointer;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border);';
+                row.onmouseover = () => row.style.backgroundColor = 'var(--bg-hover)';
+                row.onmouseout = () => row.style.backgroundColor = 'transparent';
+
+                const icon = item.type === 'dir' ? '<i class="fa-solid fa-folder" style="color:#f59e0b;"></i>' : '<i class="fa-solid fa-file-code" style="color:var(--primary);"></i>';
+                row.innerHTML = `${icon} <span>${item.name}</span>`;
+
+                row.onclick = async () => {
+                    if (item.type === 'dir') {
+                        loadPath(item.path);
+                    } else {
+                        // File selected
+                        if (confirm(`Load ${item.name}? Unsaved changes will be lost.`)) {
+                            // We need to pass the simple filename if in root, or handle full path if supported.
+                            // Currently manualLoad uses fileInput value. 
+                            // api.php?file=... works with relative or absolute provided validation allows it.
+                            // Dashboard uses item.name (filename).
+                            // Let's assume we are working with filenames in the ROOT directory for now as per api.php default.
+                            // But if we browse deeper, we might get full path issues.
+                            // Simple fix: just use the name if we want to stay consistent with dashboard.
+                            // But wait, dashboard uses builder.php?config=FILENAME.
+                            // So let's use item.name here too.
+
+                            await loadConfigFile(item.name);
+                            closeModal();
+                        }
+                    }
+                };
+                listEl.appendChild(row);
+            });
+
+        } catch (e) {
+            console.error(e);
+            listEl.innerHTML = '<div style="color:red">Error loading files</div>';
+        }
+    }
+
+    loadPath();
 }
 
 // ============================================================
