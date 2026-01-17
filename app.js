@@ -223,6 +223,26 @@ function getComponentContent(comp) {
             return `<div class="comp-form"><span>${label}</span></div>`;
         case 'html':
             return `<div class="comp-html">${comp.content || '<em>HTML/JS</em>'}</div>`;
+        case 'checklist': {
+            const items = comp.items || ['Option 1', 'Option 2', 'Option 3'];
+            const mode = comp.checklistMode || 'multi'; // 'single' (radio behavior) or 'multi' (checkbox)
+            const inputType = mode === 'single' ? 'radio' : 'checkbox';
+            const nameAttr = mode === 'single' ? `name="chk-${comp.id}"` : '';
+
+            let listHtml = items.map((item, idx) => `
+                <label class="checklist-item" style="display:flex;align-items:center;gap:8px;margin-bottom:4px;cursor:pointer;">
+                    <input type="${inputType}" ${nameAttr} id="${comp.id}-${idx}">
+                    <span>${item}</span>
+                </label>
+            `).join('');
+
+            return `
+                <div class="comp-checklist-container">
+                    <div class="comp-label" style="font-weight:500;margin-bottom:8px;">${label}</div>
+                    <div class="comp-checklist-items" style="display:flex;flex-direction:column;">${listHtml}</div>
+                </div>
+            `;
+        }
         default:
             return `<span>${label}</span>`;
     }
@@ -386,6 +406,23 @@ function openComponentSettings(comp) {
         `;
     }
 
+    // Checklist specific
+    if (comp.type === 'checklist') {
+        html += `
+            <div class="settings-group">
+                <label>Mode:</label>
+                <select id="comp-checklist-mode">
+                    <option value="multi" ${(!comp.checklistMode || comp.checklistMode === 'multi') ? 'selected' : ''}>Multi Select (Checkbox)</option>
+                    <option value="single" ${(comp.checklistMode === 'single') ? 'selected' : ''}>Single Select (Toggle/Radio)</option>
+                </select>
+            </div>
+            <div class="settings-group">
+                <label>Items (one per line):</label>
+                <textarea id="comp-checklist-items" rows="5" placeholder="Item 1\nItem 2">${(comp.items || []).join('\n')}</textarea>
+            </div>
+        `;
+    }
+
     // Label position for labeled components
     if (['checkbox', 'toggle', 'input', 'datepicker'].includes(comp.type)) {
         html += `
@@ -474,6 +511,13 @@ function handleModalConfirm() {
     // DatePicker specific
     if (currentEditComp.type === 'datepicker') {
         currentEditComp.includeTime = document.getElementById('comp-include-time')?.checked || false;
+    }
+
+    // Checklist specific
+    if (currentEditComp.type === 'checklist') {
+        currentEditComp.checklistMode = document.getElementById('comp-checklist-mode')?.value || 'multi';
+        const itemsText = document.getElementById('comp-checklist-items')?.value || '';
+        currentEditComp.items = itemsText.split('\n').map(line => line.trim()).filter(line => line !== '');
     }
 
     // Label position

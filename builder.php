@@ -97,6 +97,7 @@
                     <div class="tool" data-type="form" draggable="true"><i class="fa-solid fa-align-left"></i> Form</div>
                     <div class="tool" data-type="checkbox" draggable="true"><i class="fa-regular fa-square-check"></i> Checkbox</div>
                     <div class="tool" data-type="toggle" draggable="true"><i class="fa-solid fa-toggle-on"></i> Toggle</div>
+                    <div class="tool" data-type="checklist" draggable="true"><i class="fa-solid fa-list-check"></i> Checklist</div>
                     <div class="tool" data-type="input" draggable="true"><i class="fa-solid fa-keyboard"></i> Input</div>
                     <div class="tool" data-type="datepicker" draggable="true"><i class="fa-solid fa-calendar"></i> Calendar</div>
                 </div>

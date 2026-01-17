@@ -189,6 +189,26 @@
                     return `<div class="comp-form"><span>${label}</span></div>`;
                 case 'html':
                     return `<div class="comp-html">${comp.content || ''}</div>`;
+                case 'checklist': {
+                    const items = comp.items || ['Option 1', 'Option 2', 'Option 3'];
+                    const mode = comp.checklistMode || 'multi'; 
+                    const inputType = mode === 'single' ? 'radio' : 'checkbox';
+                    const nameAttr = mode === 'single' ? `name="chk-${comp.customId || Math.random().toString(36).substr(2, 9)}"` : ''; 
+                    
+                    let listHtml = items.map((item, idx) => `
+                        <label class="checklist-item" style="display:flex;align-items:center;gap:8px;margin-bottom:4px;cursor:pointer;">
+                            <input type="${inputType}" ${nameAttr} id="${comp.customId || 'chk'}-${idx}">
+                            <span>${item}</span>
+                        </label>
+                    `).join('');
+                    
+                    return `
+                        <div class="comp-checklist-container">
+                            <div class="comp-label" style="font-weight:500;margin-bottom:8px;">${label}</div>
+                            <div class="comp-checklist-items" style="display:flex;flex-direction:column;">${listHtml}</div>
+                        </div>
+                    `;
+                }
                 default:
                     return `<span>${label}</span>`;
             }
