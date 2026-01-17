@@ -1609,6 +1609,25 @@ async function openSaveOptionsModal() {
 }
 
 // ============================================================
+// GLOBAL UTILITIES
+// ============================================================
+window.showLoading = function (text = 'Loading...') {
+    const overlay = document.getElementById('global-loading');
+    const textEl = document.getElementById('global-loading-text');
+    if (overlay) {
+        if (textEl) textEl.textContent = text;
+        overlay.classList.remove('hidden');
+    }
+};
+
+window.hideLoading = function () {
+    const overlay = document.getElementById('global-loading');
+    if (overlay) {
+        overlay.classList.add('hidden');
+    }
+};
+
+// ============================================================
 // START
 // ============================================================
 init();

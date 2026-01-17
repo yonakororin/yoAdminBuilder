@@ -594,6 +594,31 @@
 
 
     </script>
+    <!-- Global Loading Overlay -->
+    <div id="global-loading" class="global-loading-overlay hidden">
+        <div class="global-loading-spinner"></div>
+        <div id="global-loading-text">Loading...</div>
+    </div>
+
+    <script>
+        // Global Loading Utilities
+        window.showLoading = function(text = 'Loading...') {
+            const overlay = document.getElementById('global-loading');
+            const textEl = document.getElementById('global-loading-text');
+            if (overlay) {
+                if (textEl) textEl.textContent = text;
+                overlay.classList.remove('hidden');
+            }
+        };
+
+        window.hideLoading = function() {
+            const overlay = document.getElementById('global-loading');
+            if (overlay) {
+                overlay.classList.add('hidden');
+            }
+        };
+    </script>
+
     <script src="../shared/theme.js"></script>
 </body>
 </html>

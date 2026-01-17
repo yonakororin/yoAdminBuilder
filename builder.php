@@ -75,7 +75,6 @@
                             <div class="tool" data-type="input" draggable="true"><i class="fa-solid fa-keyboard"></i> Input</div>
                             <div class="tool" data-type="datepicker" draggable="true"><i class="fa-solid fa-calendar"></i> Calendar</div>
                             <div class="tool" data-type="modal" draggable="true"><i class="fa-regular fa-window-restore"></i> Modal</div>
-                            <div class="tool" data-type="loading" draggable="true"><i class="fa-solid fa-spinner"></i> Loading</div>
                             <div class="tool" data-type="table" draggable="true"><i class="fa-solid fa-table"></i> Table</div>
                         </div>
                     </div>
@@ -132,6 +131,12 @@
             <button class="comp-modal-close" onclick="document.getElementById('help-modal').style.display='none'">&times;</button>
             <div id="help-content" style="max-height:80vh;overflow-y:auto;line-height:1.6;">Loading guide...</div>
         </div>
+    </div>
+
+    <!-- Global Loading Overlay -->
+    <div id="global-loading" class="global-loading-overlay hidden">
+        <div class="global-loading-spinner"></div>
+        <div id="global-loading-text">Loading...</div>
     </div>
 
     <!-- Marked.js -->
