@@ -18,8 +18,15 @@ if (isset($_GET['action']) && $_GET['action'] === 'browse') {
         $full = $base_dir . DIRECTORY_SEPARATOR . $item;
         $type = is_dir($full) ? 'dir' : 'file';
         
-        // Filter files: only JSON
-        if ($type === 'file' && !str_ends_with($item, '.json')) continue;
+        // Filter files
+        $allowedExts = isset($_GET['exts']) ? explode(',', $_GET['exts']) : ['json'];
+        if ($type === 'file') {
+            $ext = pathinfo($item, PATHINFO_EXTENSION);
+            // If exts contains '*', allow all
+            if (!in_array('*', $allowedExts)) {
+                 if (!in_array(strtolower($ext), $allowedExts)) continue;
+            }
+        }
         
         $result[] = [
             'name' => $item,

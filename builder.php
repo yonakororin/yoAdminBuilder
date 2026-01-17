@@ -126,7 +126,6 @@
     <!-- Marked.js -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
-    <!-- Modal -->
     <div id="modal" class="modal hidden">
         <div class="modal-content">
             <header><span id="modal-title">Title</span><button id="modal-close">&times;</button></header>
@@ -135,6 +134,17 @@
                 <button id="modal-cancel">Cancel</button>
                 <button id="modal-confirm" class="btn-primary">OK</button>
             </footer>
+        </div>
+    </div>
+
+    <!-- Browser Modal (Stacked) -->
+    <div id="browser-modal" class="modal hidden" style="z-index:1100;">
+        <div class="modal-content" style="max-width:600px;">
+            <header>
+                <span id="browser-modal-title">Browse Files</span>
+                <button id="browser-modal-close">&times;</button>
+            </header>
+            <div id="browser-modal-body"></div>
         </div>
     </div>
 
