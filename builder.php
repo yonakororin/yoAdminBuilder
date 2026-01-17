@@ -55,7 +55,9 @@
                     <input type="text" id="file-input" value="admin_config.json" placeholder="filename.json" readonly style="background-color:var(--bg-card);color:var(--text-muted);cursor:default;">
                     <button id="browse-btn" class="btn-sm" title="Browse Files"><i class="fa-solid fa-folder-open"></i></button>
                 </div>
-                <button id="save-btn" class="btn-primary"><i class="fa-solid fa-save"></i> Save</button>
+                <div style="display:flex;gap:5px;">
+                    <button id="save-btn" class="btn-primary" style="flex:1;"><i class="fa-solid fa-save"></i> Save</button>
+                </div>
                 <div style="margin-top: 10px; text-align: center; border-top: 1px solid var(--border); padding-top: 10px;">
                     <a href="logout.php" style="color: var(--text-muted); font-size: 0.8rem; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 5px;">
                         <i class="fa-solid fa-sign-out-alt"></i> Logout

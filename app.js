@@ -101,15 +101,26 @@ async function manualLoad() {
     await loadConfigFile(file);
 }
 
-async function saveConfig() {
+async function saveConfig(targetFilename = null) {
     syncCurrentTab();
+    // Helper: If called via event listener, targetFilename is Event object. Ignore it.
+    const filename = (typeof targetFilename === 'string') ? targetFilename : state.targetFile;
     try {
         const formData = new FormData();
-        formData.append('filename', state.targetFile);
+        formData.append('filename', filename);
         formData.append('config', JSON.stringify(state.config));
         const res = await fetch('api.php', { method: 'POST', body: formData });
         const json = await res.json();
-        alert(json.success ? 'Saved!' : 'Save failed.');
+
+        if (json.success) {
+            alert('Saved!');
+            if (targetFilename) {
+                // Switch context to new file
+                await loadConfigFile(targetFilename);
+            }
+        } else {
+            alert('Save failed: ' + (json.message || 'Unknown error'));
+        }
     } catch (e) {
         console.error(e);
         alert('Error saving.');
@@ -716,11 +727,9 @@ function setupEventListeners() {
     });
 
     // Save
-    document.getElementById('save-btn').addEventListener('click', saveConfig);
-
-
-    // Save
-    document.getElementById('save-btn').addEventListener('click', saveConfig);
+    document.getElementById('save-btn').addEventListener('click', openSaveOptionsModal);
+    // Removed save-as-btn listener
+    // document.getElementById('save-as-btn').addEventListener('click', openSaveAsModal);
 
     // Browse
     document.getElementById('browse-btn').addEventListener('click', openFileBrowserModal);
@@ -970,9 +979,11 @@ function setupGridInteraction() {
 // ============================================================
 // MODAL
 // ============================================================
-function openModal(title, bodyHtml) {
+function openModal(title, bodyHtml, hideFooter = false) {
     modalTitleEl.textContent = title;
     modalBodyEl.innerHTML = bodyHtml;
+    const footer = modalEl.querySelector('footer');
+    if (footer) footer.style.display = hideFooter ? 'none' : 'flex';
     modalEl.classList.remove('hidden');
 }
 
@@ -992,7 +1003,7 @@ async function openFileBrowserModal() {
         <div id="modal-file-list" style="height:300px;overflow-y:auto;border:1px solid var(--border);border-radius:4px;padding:10px;">
             Loading...
         </div>
-    `);
+    `, true);
 
     // Hide default modal buttons for this custom view if desired, or reuse them. 
     // We'll hide the OK/Cancel footer for now or assume they are just for closing?
@@ -1063,6 +1074,166 @@ async function openFileBrowserModal() {
     }
 
     loadPath();
+}
+
+// ============================================================
+// SAVE AS MODAL
+// ============================================================
+async function openSaveAsModal() {
+    openModal('Save As', `
+        <div class="browser-bar" style="margin-bottom:1rem;display:flex;gap:10px;align-items:center;">
+            <button id="modal-saveas-up" class="btn-sm"><i class="fa-solid fa-level-up-alt"></i> Up</button>
+            <div id="modal-saveas-path" style="font-family:monospace;font-size:0.9rem;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Loading...</div>
+        </div>
+        <div id="modal-saveas-list" style="height:250px;overflow-y:auto;border:1px solid var(--border);border-radius:4px;padding:10px;margin-bottom:1rem;">
+            Loading...
+        </div>
+        <div style="display:flex;gap:10px;align-items:center;">
+            <label style="color:var(--text-muted);">Filename:</label>
+            <input type="text" id="modal-saveas-input" class="comp-input" style="flex:1;" placeholder="filename.json" value="${state.targetFile}">
+            <button id="modal-saveas-btn" class="btn-primary">Save</button>
+        </div>
+    `, true);
+
+    const listEl = document.getElementById('modal-saveas-list');
+    const pathEl = document.getElementById('modal-saveas-path');
+    const upBtn = document.getElementById('modal-saveas-up');
+    const inputEl = document.getElementById('modal-saveas-input');
+    const saveBtn = document.getElementById('modal-saveas-btn');
+
+    let currentPath = '';
+
+    async function loadPath(path = '') {
+        try {
+            const res = await fetch(`api.php?action=browse&path=${encodeURIComponent(path)}`);
+            const data = await res.json();
+            currentPath = data.current_path;
+            pathEl.textContent = currentPath;
+            pathEl.title = currentPath;
+            listEl.innerHTML = '';
+
+            upBtn.onclick = () => loadPath(currentPath + '/..');
+
+            if (data.items.length === 0) {
+                listEl.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:1rem;">No files found</div>';
+            } else {
+                data.items.forEach(item => {
+                    const row = document.createElement('div');
+                    row.style.cssText = 'padding:5px 10px;cursor:pointer;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border);';
+                    row.onmouseover = () => row.style.backgroundColor = 'var(--bg-hover)';
+                    row.onmouseout = () => row.style.backgroundColor = 'transparent';
+
+                    const icon = item.type === 'dir'
+                        ? '<i class="fa-solid fa-folder" style="color:#f59e0b;"></i>'
+                        : '<i class="fa-solid fa-file-code" style="color:var(--primary);"></i>';
+
+                    row.innerHTML = `${icon} <span>${item.name}</span>`;
+
+                    row.onclick = () => {
+                        if (item.type === 'dir') {
+                            loadPath(item.path);
+                        } else {
+                            // Select file for overwrite
+                            inputEl.value = item.name;
+                        }
+                    };
+                    listEl.appendChild(row);
+                });
+            }
+        } catch (e) {
+            console.error(e);
+            listEl.innerHTML = '<div style="color:red">Error loading files</div>';
+        }
+    }
+
+    saveBtn.onclick = async () => {
+        let filename = inputEl.value.trim();
+        if (!filename) return alert('Please enter a filename.');
+        if (!filename.toLowerCase().endsWith('.json')) filename += '.json';
+
+        // Confirm overwrite if exists in list
+        // Note: This check relies on currently loaded list. 
+        // If file exists but not in list (e.g. race condition), api.php will overwrite anyway.
+        // We can do a client-side check against the loaded items.
+        // But simply confirmation is enough for "Save As".
+
+        // Actually, let's just confirm if "Save As" is same as current target?
+        // No, standard behavior is overwrite confirmation if file exists.
+
+        // Check if file is in the current list
+        // (We don't have the list data readily available unless we store it or query DOM)
+        // Let's query DOM for simplicity or just proceed. 
+        // A simple "Are you sure?" for Save As is often good practice?
+        // Or strictly check existence.
+        // Let's try to check existence by name.
+        const exists = Array.from(listEl.querySelectorAll('span')).some(span => span.textContent === filename);
+        if (exists) {
+            if (!confirm(`File "${filename}" already exists. Overwrite?`)) return;
+        }
+
+        await saveConfig(filename);
+        closeModal();
+    };
+
+    loadPath();
+}
+
+// ============================================================
+// SAVE OPTIONS MODAL
+// ============================================================
+// ============================================================
+// SAVE OPTIONS MODAL
+// ============================================================
+async function openSaveOptionsModal() {
+    // Fetch current directory path to display context
+    let currentDir = 'Loading...';
+    try {
+        const res = await fetch('api.php?action=browse');
+        const data = await res.json();
+        currentDir = data.current_path;
+        // Normalize slashes for display
+        if (!currentDir.endsWith('/') && !currentDir.endsWith('\\')) {
+            currentDir += '/';
+        }
+    } catch (e) {
+        currentDir = '';
+    }
+
+    openModal('Save Dashboard', `
+        <div style="margin-bottom:1.5rem;">
+            <div style="margin-bottom:1rem;">
+                <p style="color:var(--text-muted);font-size:0.85rem;margin-bottom:0.3rem;">Save Location (Folder):</p>
+                <div style="font-family:monospace;background-color:var(--bg-card);padding:0.5rem;border:1px solid var(--border);border-radius:4px;word-break:break-all;font-size:0.85rem;color:var(--text-muted);">
+                    ${currentDir}
+                </div>
+            </div>
+            <div>
+                <p style="color:var(--text-muted);font-size:0.85rem;margin-bottom:0.3rem;">File Name:</p>
+                <div style="font-family:monospace;background-color:var(--bg-card);padding:0.5rem;border:1px solid var(--border);border-radius:4px;font-size:1rem;font-weight:bold;">
+                    ${state.targetFile}
+                </div>
+            </div>
+        </div>
+        <div style="display:flex;gap:10px;justify-content:center;">
+            <button id="modal-opt-overwrite" class="btn-primary" style="padding:0.8rem 1.5rem;"><i class="fa-solid fa-save"></i> Overwrite</button>
+            <button id="modal-opt-saveas" class="btn-primary" style="padding:0.8rem 1.5rem;background-color:var(--text-muted);border:none;"><i class="fa-solid fa-file-export"></i> Save As...</button>
+        </div>
+        <div style="text-align:center;margin-top:1rem;">
+            <button id="modal-opt-cancel" style="background:none;border:none;color:var(--text-muted);cursor:pointer;text-decoration:underline;">Cancel</button>
+        </div>
+    `, true); // Hide default footer
+
+    document.getElementById('modal-opt-overwrite').onclick = async () => {
+        await saveConfig(null); // Overwrite current
+        closeModal();
+    };
+
+    document.getElementById('modal-opt-saveas').onclick = () => {
+        closeModal();
+        openSaveAsModal();
+    };
+
+    document.getElementById('modal-opt-cancel').onclick = closeModal;
 }
 
 // ============================================================
