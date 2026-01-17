@@ -14,24 +14,28 @@ if (!isset($base_url)) {
 $sso_url = '../yoSSO';
 
 // Handle New File Creation
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['new_filename'])) {
-    $new_file = trim($_POST['new_filename']);
-    if (!empty($new_file)) {
-        if (!str_ends_with($new_file, '.json')) $new_file .= '.json';
-        
-        // Basic validation: filename only (no directory traversal)
-        $new_file = basename($new_file);
-        $full_path = __DIR__ . DIRECTORY_SEPARATOR . $new_file;
-        
-        if (!file_exists($full_path)) {
-            // Create empty config or default structure
-            $default_config = [];
-            file_put_contents($full_path, json_encode($default_config, JSON_PRETTY_PRINT));
-        }
-        
-        header("Location: builder.php?config=" . urlencode($new_file));
-        exit;
-    }
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create_new'])) {
+    // Auto-generate filename based on timestamp
+    $timestamp = date('Ymd_His');
+    // Add random suffix to avoid collision
+    $random = substr(str_shuffle('abcdefghijklmnopqrstuvwxyz'), 0, 4);
+    $new_file = "dashboard_{$timestamp}_{$random}.json";
+    
+    $full_path = __DIR__ . DIRECTORY_SEPARATOR . $new_file;
+    
+    // Create empty config or default structure
+    // Adding a root Title for clarity
+    $default_config = [
+        [
+            "id" => "menu-" . uniqid(),
+            "title" => "Main Menu",
+            "submenus" => []
+        ]
+    ];
+    file_put_contents($full_path, json_encode($default_config, JSON_PRETTY_PRINT));
+    
+    header("Location: builder.php?config=" . urlencode($new_file));
+    exit;
 }
 ?>
 <!DOCTYPE html>
@@ -162,7 +166,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['new_filename'])) {
             display: flex;
             gap: 0.5rem;
             flex: 1;
-            max-width: 400px;
+            /* max-width removed to allow full width right alignment */
         }
         
         input.new-file-input {
@@ -251,9 +255,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['new_filename'])) {
         </div>
 
         <div class="footer">
-            <form method="POST" class="create-form">
-                <input type="text" name="new_filename" class="new-file-input" placeholder="New Dashboard Name..." required>
-                <button type="submit" class="btn-primary"><i class="fa-solid fa-plus"></i> Create</button>
+            <form method="POST" class="create-form" style="justify-content:flex-end;">
+                <input type="hidden" name="create_new" value="1">
+                <button type="submit" class="btn-primary" style="padding:0.75rem 1.5rem;font-size:1rem;">
+                    <i class="fa-solid fa-plus-circle"></i> Create New Dashboard
+                </button>
             </form>
         </div>
     </div>
@@ -296,22 +302,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['new_filename'])) {
                     if (item.type === 'dir') {
                         el.onclick = () => loadPath(item.path);
                     } else {
-                        // For files, we link to builder
-                        el.href = `builder.php?config=${encodeURIComponent(item.name)}`; // Using filename relative to root for now
-                        // Note: If we support subdirs deep navigation, we might need to pass partial path or handle it in builder.
-                        // Currently api.php browse logic sends standard browse. 
-                        // If we are in a subdir, item.name is just name. 
-                        // If builder.php expects just filename in same dir, we verify that.
-                        // If we are deep browsing, we might need to pass relative path.
-                        // But builder implementation is: "config file" -> loads from current dir?
-                        // Let's assume for now we just create/edit in root dir or support simple browsing.
-                        
-                        // Actually, let's pass the item.name. The builder will load it.
-                        // If we are in subdir, we probably want to pass the relative path from root? 
-                        // Or builder.php only supports files in its own directory?
-                        // Looking at api.php, it loads `$_GET['file']`.
-                        // If we browse to a subdir, we can only open if we pass the right path.
-                        // But let's keep it simple: mainly for root dir management.
+                        // For files, confirm before loading
+                        el.onclick = (e) => {
+                            e.preventDefault();
+                            if (confirm(`Open "${item.name}" in Builder?`)) {
+                                window.location.href = `builder.php?config=${encodeURIComponent(item.name)}`;
+                            }
+                        };
                     }
                     
                     gridEl.appendChild(el);
