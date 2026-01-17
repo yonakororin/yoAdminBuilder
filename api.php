@@ -5,9 +5,25 @@ header('Content-Type: application/json');
 // List files
 // Browser Action
 if (isset($_GET['action']) && $_GET['action'] === 'browse') {
-    $base_dir = $_GET['path'] ?? __DIR__;
-    // Sanity check: prevent traversing above root if needed, but for dev tool allow system browsing
-    if (!is_dir($base_dir)) $base_dir = __DIR__;
+    $requested_path = $_GET['path'] ?? '';
+    
+    // If path is empty or not set, start at __DIR__
+    if (empty($requested_path)) {
+        $base_dir = __DIR__;
+    } else {
+        // Try to resolve relative paths from __DIR__
+        if (!is_dir($requested_path)) {
+            // Maybe it's a relative path - try resolving from __DIR__
+            $relative_attempt = __DIR__ . DIRECTORY_SEPARATOR . $requested_path;
+            if (is_dir($relative_attempt)) {
+                $base_dir = $relative_attempt;
+            } else {
+                $base_dir = __DIR__;
+            }
+        } else {
+            $base_dir = $requested_path;
+        }
+    }
     $base_dir = realpath($base_dir);
     
     $items = scandir($base_dir);

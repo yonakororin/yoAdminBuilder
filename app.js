@@ -1383,9 +1383,13 @@ async function openFileBrowserModal() {
 // SAVE AS MODAL
 // ============================================================
 async function openSaveAsModal() {
+    // Extract directory and filename from current target
+    const lastSlash = state.targetFile.lastIndexOf('/');
+    const initialDir = lastSlash > -1 ? state.targetFile.substring(0, lastSlash) : '';
+    const initialFilename = lastSlash > -1 ? state.targetFile.substring(lastSlash + 1) : state.targetFile;
+
     openModal('Save As', `
     <div class="browser-bar" style="margin-bottom:1rem;display:flex;gap:10px;align-items:center;">
-            <button id="modal-saveas-up" class="btn-sm"><i class="fa-solid fa-level-up-alt"></i> Up</button>
             <div id="modal-saveas-path" style="font-family:monospace;font-size:0.9rem;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Loading...</div>
         </div >
         <div id="modal-saveas-list" style="height:250px;overflow-y:auto;border:1px solid var(--border);border-radius:4px;padding:10px;margin-bottom:1rem;">
@@ -1393,14 +1397,13 @@ async function openSaveAsModal() {
         </div>
         <div style="display:flex;gap:10px;align-items:center;">
             <label style="color:var(--text-muted);">Filename:</label>
-            <input type="text" id="modal-saveas-input" class="comp-input" style="flex:1;" placeholder="filename.json" value="${state.targetFile}">
+            <input type="text" id="modal-saveas-input" class="comp-input" style="flex:1;" placeholder="filename.json" value="${initialFilename}">
             <button id="modal-saveas-btn" class="btn-primary">Save</button>
         </div>
 `, true);
 
     const listEl = document.getElementById('modal-saveas-list');
     const pathEl = document.getElementById('modal-saveas-path');
-    const upBtn = document.getElementById('modal-saveas-up');
     const inputEl = document.getElementById('modal-saveas-input');
     const saveBtn = document.getElementById('modal-saveas-btn');
 
@@ -1414,8 +1417,6 @@ async function openSaveAsModal() {
             pathEl.textContent = currentPath;
             pathEl.title = currentPath;
             listEl.innerHTML = '';
-
-            upBtn.onclick = () => loadPath(currentPath + '/..');
 
             if (data.items.length === 0) {
                 listEl.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:1rem;">No files found</div>';
@@ -1459,11 +1460,14 @@ async function openSaveAsModal() {
             if (!confirm(`File "${filename}" already exists.Overwrite ? `)) return;
         }
 
-        await saveConfig(filename);
+        // Construct full path: currentPath + filename
+        const fullPath = currentPath ? currentPath + '/' + filename : filename;
+        await saveConfig(fullPath);
         closeModal();
     };
 
-    loadPath();
+    // Start at current file's directory
+    loadPath(initialDir);
 }
 
 
@@ -1474,10 +1478,15 @@ async function openSaveAsModal() {
 // SAVE OPTIONS MODAL
 // ============================================================
 async function openSaveOptionsModal() {
+    // Extract directory and filename from current target
+    const lastSlash = state.targetFile.lastIndexOf('/');
+    const initialDir = lastSlash > -1 ? state.targetFile.substring(0, lastSlash) : '';
+    const initialFilename = lastSlash > -1 ? state.targetFile.substring(lastSlash + 1) : state.targetFile;
+
     // Fetch current directory path to display context
     let currentDir = 'Loading...';
     try {
-        const res = await fetch('api.php?action=browse');
+        const res = await fetch(`api.php?action=browse&path=${encodeURIComponent(initialDir)}`);
         const data = await res.json();
         currentDir = data.current_path;
         // Normalize slashes for display
@@ -1499,7 +1508,7 @@ async function openSaveOptionsModal() {
             <div>
                 <p style="color:var(--text-muted);font-size:0.85rem;margin-bottom:0.3rem;">File Name:</p>
                 <div style="font-family:monospace;background-color:var(--bg-card);padding:0.5rem;border:1px solid var(--border);border-radius:4px;font-size:1rem;font-weight:bold;">
-                    ${state.targetFile}
+                    ${initialFilename}
                 </div>
             </div>
         </div >
