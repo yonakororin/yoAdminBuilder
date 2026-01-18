@@ -132,7 +132,9 @@
                         data: [],
                         page: 1,
                         pageSize: parseInt(el?.dataset.pagesize) || 10,
-                        columns: JSON.parse(el?.dataset.columns || '[]')
+                        columns: JSON.parse(el?.dataset.columns || '[]'),
+                        sortColumn: null,
+                        sortDirection: 'asc' // 'asc' or 'desc'
                     };
                 }
                 return this._state[tableId];
@@ -204,6 +206,44 @@
                 this.goToPage(tableId, st.page + 1);
             },
             
+            // Sort by column
+            sortBy(tableId, column) {
+                const st = this._getState(tableId);
+                
+                // Toggle direction if same column, otherwise reset to asc
+                if (st.sortColumn === column) {
+                    st.sortDirection = st.sortDirection === 'asc' ? 'desc' : 'asc';
+                } else {
+                    st.sortColumn = column;
+                    st.sortDirection = 'asc';
+                }
+                
+                // Sort data
+                st.data.sort((a, b) => {
+                    let valA = Array.isArray(a) ? a[st.columns.indexOf(column)] : a[column];
+                    let valB = Array.isArray(b) ? b[st.columns.indexOf(column)] : b[column];
+                    
+                    // Handle null/undefined
+                    if (valA == null) valA = '';
+                    if (valB == null) valB = '';
+                    
+                    // Numeric comparison
+                    if (!isNaN(valA) && !isNaN(valB)) {
+                        valA = Number(valA);
+                        valB = Number(valB);
+                    }
+                    
+                    let result = 0;
+                    if (valA < valB) result = -1;
+                    else if (valA > valB) result = 1;
+                    
+                    return st.sortDirection === 'asc' ? result : -result;
+                });
+                
+                st.page = 1;
+                this.refresh(tableId);
+            },
+            
             // Get row data by index (global index, not page index)
             getRowData(tableId, index) {
                 const st = this._getState(tableId);
@@ -261,9 +301,25 @@
                     return;
                 }
                 
+                const thead = el.querySelector('thead tr');
                 const tbody = el.querySelector('tbody');
                 const pageInfo = el.querySelector('.page-info');
                 const maxPage = Math.ceil(st.data.length / st.pageSize) || 1;
+                
+                // Update header with sort indicators
+                if (thead) {
+                    thead.innerHTML = st.columns.map(col => {
+                        let sortIcon = '';
+                        if (st.sortColumn === col) {
+                            sortIcon = st.sortDirection === 'asc' 
+                                ? ' <i class="fa-solid fa-sort-up"></i>' 
+                                : ' <i class="fa-solid fa-sort-down"></i>';
+                        } else {
+                            sortIcon = ' <i class="fa-solid fa-sort" style="opacity:0.3;"></i>';
+                        }
+                        return `<th onclick="yoTable.sortBy('${tableId}','${col}')" style="cursor:pointer;">${col}${sortIcon}</th>`;
+                    }).join('');
+                }
                 
                 // Update page info
                 if (pageInfo) {
