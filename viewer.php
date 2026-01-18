@@ -142,7 +142,37 @@
                 const st = this._getState(tableId);
                 st.data = Array.isArray(data) ? data : [];
                 st.page = 1;
+                // Auto-fit page size to container
+                this.autoFitPageSize(tableId);
                 this.refresh(tableId);
+            },
+            
+            // Calculate and set page size based on available container height
+            autoFitPageSize(tableId) {
+                const el = document.getElementById(tableId);
+                if (!el) return;
+                
+                const st = this._getState(tableId);
+                const container = el.closest('.item-content') || el.parentElement;
+                if (!container) return;
+                
+                // Get container height
+                const containerHeight = container.clientHeight;
+                
+                // Reserve space for header (approx 40px) and pagination (approx 50px)
+                const headerHeight = 40;
+                const paginationHeight = 50;
+                const availableHeight = containerHeight - headerHeight - paginationHeight;
+                
+                // Estimate row height (approx 35px per row)
+                const rowHeight = 35;
+                
+                // Calculate how many rows can fit
+                const fittingRows = Math.max(1, Math.floor(availableHeight / rowHeight));
+                
+                console.log('[yoTable] autoFit:', tableId, 'container:', containerHeight, 'available:', availableHeight, 'rows:', fittingRows);
+                
+                st.pageSize = fittingRows;
             },
             
             setColumns(tableId, columns) {
@@ -226,7 +256,10 @@
             refresh(tableId) {
                 const st = this._getState(tableId);
                 const el = document.getElementById(tableId);
-                if (!el) return;
+                if (!el) {
+                    console.error(`[yoTable] Table with ID "${tableId}" not found.`);
+                    return;
+                }
                 
                 const tbody = el.querySelector('tbody');
                 const pageInfo = el.querySelector('.page-info');
@@ -241,6 +274,8 @@
                 const start = (st.page - 1) * st.pageSize;
                 const end = start + st.pageSize;
                 const pageData = st.data.slice(start, end);
+                
+                console.log('[yoTable] refresh:', tableId, 'columns:', st.columns, 'pageData length:', pageData.length, 'first row:', pageData[0]);
                 
                 if (tbody) {
                     if (pageData.length === 0) {
@@ -265,6 +300,8 @@
                             return `<tr data-row-index="${globalIndex}">${cells}</tr>`;
                         }).join('');
                     }
+                } else {
+                    console.warn('[yoTable] tbody not found for table:', tableId);
                 }
             }
         };
@@ -459,13 +496,22 @@
         
         function executeScripts(container) {
             const scripts = container.querySelectorAll('script');
+            console.log(`[Viewer] Found ${scripts.length} scripts to execute.`);
             scripts.forEach(oldScript => {
                 const newScript = document.createElement('script');
+                
+                // Copy all attributes
+                Array.from(oldScript.attributes).forEach(attr => {
+                    newScript.setAttribute(attr.name, attr.value);
+                });
+                
                 if (oldScript.src) {
                     newScript.src = oldScript.src;
                 } else {
                     newScript.textContent = oldScript.textContent;
                 }
+                
+                console.log('[Viewer] Executing script:', oldScript.src || 'inline');
                 oldScript.parentNode.replaceChild(newScript, oldScript);
             });
         }
