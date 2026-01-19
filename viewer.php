@@ -153,18 +153,40 @@
                 this.refresh(tableId);
             },
             
-            // Search/filter data
+            // Search/filter data (supports regex with /pattern/ syntax)
             search(tableId, query) {
                 const st = this._getState(tableId);
-                st.searchQuery = query.toLowerCase().trim();
+                st.searchQuery = query.trim();
                 
                 if (!st.searchQuery) {
                     st.data = [...st.originalData];
                 } else {
+                    // Check if regex pattern (starts and ends with /)
+                    let regex = null;
+                    if (st.searchQuery.startsWith('/') && st.searchQuery.lastIndexOf('/') > 0) {
+                        const lastSlash = st.searchQuery.lastIndexOf('/');
+                        const pattern = st.searchQuery.slice(1, lastSlash);
+                        const flags = st.searchQuery.slice(lastSlash + 1) || 'i';
+                        try {
+                            regex = new RegExp(pattern, flags);
+                        } catch (e) {
+                            console.warn('[yoTable] Invalid regex:', e.message);
+                            regex = null;
+                        }
+                    }
+                    
+                    const lowerQuery = st.searchQuery.toLowerCase();
+                    
                     st.data = st.originalData.filter(row => {
                         return st.columns.some(col => {
                             const val = Array.isArray(row) ? row[st.columns.indexOf(col)] : row[col];
-                            return String(val ?? '').toLowerCase().includes(st.searchQuery);
+                            const strVal = String(val ?? '');
+                            
+                            if (regex) {
+                                return regex.test(strVal);
+                            } else {
+                                return strVal.toLowerCase().includes(lowerQuery);
+                            }
                         });
                     });
                 }
