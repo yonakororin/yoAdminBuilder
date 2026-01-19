@@ -729,6 +729,7 @@ body {
     position: relative;
     cursor: default;
     transition: box-shadow 0.15s, border-color 0.15s;
+    overflow: hidden;
 }
 
 .grid-item:hover {
@@ -1431,6 +1432,31 @@ label {
 .comp-table-pagination .page-info {
     font-size: 0.85rem;
     color: var(--text-muted);
+}
+
+/* Chart Component */
+.comp-chart-wrapper {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.comp-chart-container {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px;
+    flex: 1;
+    min-height: 0;
+    position: relative;
+}
+
+.comp-chart-canvas {
+    width: 100% !important;
+    height: 100% !important;
+    max-height: 100%;
 }
 
 /* Global Loading Overlay */

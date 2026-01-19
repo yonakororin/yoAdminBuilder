@@ -498,9 +498,17 @@ function getComponentContent(comp) {
         case 'loading':
             return `
                 <div class="comp-placeholder">
-                    <i class="fa-solid fa-spinner" style="font-size:1.5rem;margin-bottom:0.5rem;"></i>
-                    <div style="font-weight:600;">LOADING</div>
+                    <i class="fa-solid fa-spinner fa-spin" style="font-size:1.5rem;margin-bottom:0.5rem;"></i>
+                    <div style="font-weight:600;">LOADING SPINNER</div>
                     <div style="font-size:0.7rem;">ID: ${comp.customId || '(No ID)'}</div>
+                </div>
+            `;
+        case 'chart':
+            return `
+                <div class="comp-placeholder">
+                    <i class="fa-solid fa-chart-simple" style="font-size:1.5rem;margin-bottom:0.5rem;"></i>
+                    <div style="font-weight:600;">CHART: ${comp.chartType || 'bar'}</div>
+                    <div style="font-size:0.7rem;">Target: ${comp.targetTableId || '(None)'}</div>
                 </div>
             `;
         case 'table': {
@@ -606,17 +614,17 @@ function openHtmlEditor(comp) {
             <button class="html-tab" data-mode="direct">Direct Edit</button>
         </div>
         <div class="html-editor-content">
-            <div id="file-mode" class="editor-mode active">
-                <label>File Path:</label>
-                <input type="text" id="html-file-path" placeholder="e.g. components/widget.html" value="${comp.filePath || ''}">
-                <small>Relative path to HTML file</small>
-            </div>
-            <div id="direct-mode" class="editor-mode hidden">
-                <label>HTML Content:</label>
-                <textarea id="html-direct-content" rows="10" placeholder="&lt;div&gt;Your HTML...&lt;/div&gt;">${comp.content || ''}</textarea>
-            </div>
-        </div>
-    `;
+                    <div id="file-mode" class="editor-mode active">
+                        <label>File Path:</label>
+                        <input type="text" id="html-file-path" placeholder="e.g. components/widget.html" value="${comp.filePath || ''}">
+                            <small>Relative path to HTML file</small>
+                    </div>
+                    <div id="direct-mode" class="editor-mode hidden">
+                        <label>HTML Content:</label>
+                        <textarea id="html-direct-content" rows="10" placeholder="&lt;div&gt;Your HTML...&lt;/div&gt;">${comp.content || ''}</textarea>
+                    </div>
+                </div>
+            `;
 
     // Tab switching
     modalBodyEl.querySelectorAll('.html-tab').forEach(tab => {
@@ -671,7 +679,7 @@ function openComponentSettings(comp) {
 
     // Base fields for all components
     let html = `
-        <div class="settings-group">
+                <div class="settings-group">
             <label>ID (for JavaScript):</label>
             <input type="text" id="comp-custom-id" placeholder="e.g. myCheckbox" value="${comp.customId || ''}">
         </div>
@@ -683,12 +691,12 @@ function openComponentSettings(comp) {
             <label>Label:</label>
             <input type="text" id="comp-label" value="${comp.label || ''}">
         </div>
-    `;
+            `;
 
     // Button specific
     if (comp.type === 'button') {
         html += `
-            <div class="settings-group">
+                <div class="settings-group">
                 <label>Style:</label>
                 <select id="comp-button-style">
                     <option value="normal" ${(!comp.buttonStyle || comp.buttonStyle === 'normal') ? 'selected' : ''}>Normal (Blue)</option>
@@ -698,32 +706,32 @@ function openComponentSettings(comp) {
                     <option value="disabled" ${(comp.buttonStyle === 'disabled') ? 'selected' : ''}>Disabled</option>
                 </select>
             </div>
-            <div class="settings-group">
-                <label>OnClick (JS):</label>
-                <input type="text" id="comp-button-onclick" placeholder="alert('Hello')" value="${(comp.onClick || '').replace(/"/g, '&quot;')}">
-            </div>
-        `;
+                <div class="settings-group">
+                    <label>OnClick (JS):</label>
+                    <input type="text" id="comp-button-onclick" placeholder="alert('Hello')" value="${(comp.onClick || '').replace(/" /g, '&quot;')}">
+                </div>
+            `;
     }
 
     // Select specific
     if (comp.type === 'select') {
         const optionsStr = (comp.options || ['Option 1', 'Option 2', 'Option 3']).join('\n');
         html += `
-            <div class="settings-group">
+                <div class="settings-group">
                 <label>Options (one per line):</label>
                 <textarea id="comp-select-options" rows="5" placeholder="Option 1\nOption 2">${optionsStr}</textarea>
             </div>
-            <div class="settings-group">
-                <label>Default Value:</label>
-                <input type="text" id="comp-select-default" value="${comp.defaultValue || ''}" placeholder="Option 1">
-            </div>
-        `;
+                <div class="settings-group">
+                    <label>Default Value:</label>
+                    <input type="text" id="comp-select-default" value="${comp.defaultValue || ''}" placeholder="Option 1">
+                </div>
+            `;
     }
 
     // HTML-specific fields (and Modal)
     if (comp.type === 'html' || comp.type === 'modal') {
         html += `
-            <div class="settings-group">
+                <div class="settings-group">
                 <label>${comp.type === 'modal' ? 'Modal Content (HTML):' : 'Source:'}</label>
                 <div class="html-editor-tabs">
                     <button class="html-tab ${!comp.content ? 'active' : ''}" data-mode="file">File Path</button>
@@ -739,60 +747,60 @@ function openComponentSettings(comp) {
                 <label>HTML Content:</label>
                 <textarea id="html-direct-content" rows="8">${comp.content || ''}</textarea>
             </div>
-        `;
+            `;
     }
 
     if (comp.type === 'modal') {
         html += `
-            <div class="settings-group">
+                <div class="settings-group">
                 <label>Footer Buttons (Label | Style | OnClick) - One per line:</label>
                 <textarea id="comp-modal-buttons" rows="3" placeholder="Close | normal | close()">${(comp.modalButtons || []).map(b => `${b.label} | ${b.style} | ${b.onClick}`).join('\n')}</textarea>
                 <small style="color:var(--text-muted);display:block;margin-top:4px;">Styles: normal, info, danger, warning, disabled</small>
             </div>
-        `;
+                `;
     }
 
     // Loading specific
     if (comp.type === 'loading') {
 
         html += `
-            <div class="settings-group">
+                <div class="settings-group">
                 <label>Loading Text (optional):</label>
                 <input type="text" id="comp-loading-text" placeholder="Processing..." value="${comp.loadingText || ''}">
             </div>
-        `;
+            `;
     }
 
     // DatePicker specific
     if (comp.type === 'datepicker') {
         html += `
-            <div class="settings-group">
-                <label><input type="checkbox" id="comp-include-time" ${comp.includeTime ? 'checked' : ''}> Include time</label>
+                <div class="settings-group">
+                    <label><input type="checkbox" id="comp-include-time" ${comp.includeTime ? 'checked' : ''}> Include time</label>
             </div>
-        `;
+                `;
     }
 
     // Checklist specific
     if (comp.type === 'checklist') {
         html += `
-            <div class="settings-group">
+                <div class="settings-group">
                 <label>Mode:</label>
                 <select id="comp-checklist-mode">
                     <option value="single" ${(!comp.checklistMode || comp.checklistMode === 'single') ? 'selected' : ''}>Single Select (Toggle/Radio)</option>
                     <option value="multi" ${(comp.checklistMode === 'multi') ? 'selected' : ''}>Multi Select (Checkbox)</option>
                 </select>
             </div>
-            <div class="settings-group">
-                <label>Items (one per line):</label>
-                <textarea id="comp-checklist-items" rows="5" placeholder="Item 1\nItem 2">${(comp.items || []).join('\n')}</textarea>
-            </div>
-        `;
+                <div class="settings-group">
+                    <label>Items (one per line):</label>
+                    <textarea id="comp-checklist-items" rows="5" placeholder="Item 1\nItem 2">${(comp.items || []).join('\n')}</textarea>
+                </div>
+            `;
     }
 
     // Table specific
     if (comp.type === 'table') {
         html += `
-            <div class="settings-group">
+                <div class="settings-group">
                 <label>Columns (comma separated):</label>
                 <input type="text" id="comp-table-columns" placeholder="Name, Age, Email" value="${(comp.columns || []).join(', ')}">
             </div>
@@ -800,20 +808,48 @@ function openComponentSettings(comp) {
                 <label>Rows per page:</label>
                 <input type="number" id="comp-table-pagesize" min="1" max="100" value="${comp.pageSize || 10}">
             </div>
-        `;
+            `;
+    }
+
+    // Chart specific
+    if (comp.type === 'chart') {
+        html += `
+                <div class="settings-group">
+                <label>Target Table ID:</label>
+                <input type="text" id="comp-chart-tableid" value="${comp.targetTableId || ''}" placeholder="table-id">
+            </div>
+            <div class="settings-group">
+                <label>Chart Type:</label>
+                <select id="comp-chart-type">
+                    <option value="bar" ${(!comp.chartType || comp.chartType === 'bar') ? 'selected' : ''}>Bar Chart</option>
+                    <option value="pie" ${(comp.chartType === 'pie') ? 'selected' : ''}>Pie Chart</option>
+                    <option value="histogram" ${(comp.chartType === 'histogram') ? 'selected' : ''}>Histogram (Frequency)</option>
+                </select>
+            </div>
+            <div class="settings-group">
+                <label>Data Column (Header):</label>
+                <input type="text" id="comp-chart-datacol" value="${comp.dataColumn || ''}" placeholder="e.g. Price">
+                <small style="color:var(--text-muted)">Column name to use for values (Y)</small>
+            </div>
+            <div class="settings-group">
+                <label>Label Column (Header) [Optional]:</label>
+                <input type="text" id="comp-chart-labelcol" value="${comp.labelColumn || ''}" placeholder="e.g. Name">
+                <small style="color:var(--text-muted)">Column name for labels (X). Unused for Histogram.</small>
+            </div>
+            `;
     }
 
     // Label position for labeled components
     if (['checkbox', 'toggle', 'input', 'datepicker'].includes(comp.type)) {
         html += `
-            <div class="settings-group">
+                <div class="settings-group">
                 <label>Label Position:</label>
                 <select id="comp-label-position">
                     <option value="left" ${comp.labelPosition === 'left' ? 'selected' : ''}>Left</option>
                     <option value="right" ${comp.labelPosition === 'right' ? 'selected' : ''}>Right</option>
                 </select>
             </div>
-        `;
+                `;
     }
 
     modalBodyEl.innerHTML = html;
@@ -979,6 +1015,14 @@ function saveComponentState() {
         const columnsText = document.getElementById('comp-table-columns')?.value || '';
         currentEditComp.columns = columnsText.split(',').map(c => c.trim()).filter(c => c !== '');
         currentEditComp.pageSize = parseInt(document.getElementById('comp-table-pagesize')?.value) || 10;
+    }
+
+    // Chart specific
+    if (currentEditComp.type === 'chart') {
+        currentEditComp.targetTableId = document.getElementById('comp-chart-tableid')?.value?.trim() || '';
+        currentEditComp.chartType = document.getElementById('comp-chart-type')?.value || 'bar';
+        currentEditComp.dataColumn = document.getElementById('comp-chart-datacol')?.value?.trim() || '';
+        currentEditComp.labelColumn = document.getElementById('comp-chart-labelcol')?.value?.trim() || '';
     }
 
     // Label position
@@ -1269,7 +1313,7 @@ function showWorkspace() {
 
     // Set breadcrumb based on whether submenu exists
     if (sub) {
-        breadcrumbsEl.textContent = `${menu?.title} > ${sub?.title}`;
+        breadcrumbsEl.textContent = `${menu?.title} > ${sub?.title} `;
     } else {
         breadcrumbsEl.textContent = menu?.title || '';
     }
@@ -1346,6 +1390,8 @@ function setupToolboxDnD() {
             checkbox: 'Checkbox',
             toggle: 'Toggle',
             input: 'Input',
+            select: 'Select',
+            chart: 'Chart',
             datepicker: 'Calendar'
         };
 
@@ -1485,7 +1531,8 @@ function setupGlobalAreaDnD(gridId, areaType) {
             checklist: 'Checklist',
             datepicker: 'Calendar',
             modal: 'Modal',
-            table: 'Table'
+            table: 'Table',
+            chart: 'Chart'
         };
 
         const newComp = {
@@ -1672,9 +1719,9 @@ async function openSelectFileModal(onSelect, extensions = ['json'], title = 'Bro
             <div id="modal-path-display" style="font-family:monospace;font-size:0.9rem;color:var(--text-muted);">Loading...</div>
         </div>
         <div id="modal-file-list" style="height:300px;overflow-y:auto;border:1px solid var(--border);border-radius:4px;padding:10px;">
-            Loading...
-        </div>
-    `);
+                    Loading...
+                </div>
+            `);
 
     const listEl = document.getElementById('modal-file-list');
     const pathEl = document.getElementById('modal-path-display');
@@ -1685,7 +1732,7 @@ async function openSelectFileModal(onSelect, extensions = ['json'], title = 'Bro
     async function loadPath(path = '') {
         try {
             const extsParam = extensions.join(',');
-            const res = await fetch(`api.php?action=browse&path=${encodeURIComponent(path)}&exts=${extsParam}`);
+            const res = await fetch(`api.php ? action = browse & path=${encodeURIComponent(path)}& exts=${extsParam} `);
             const data = await res.json();
 
             currentPath = data.current_path;
@@ -1759,9 +1806,9 @@ async function openSaveAsModal() {
     const initialFilename = lastSlash > -1 ? state.targetFile.substring(lastSlash + 1) : state.targetFile;
 
     openModal('Save As', `
-    <div class="browser-bar" style="margin-bottom:1rem;display:flex;gap:10px;align-items:center;">
+        <div class="browser-bar" style="margin-bottom:1rem;display:flex;gap:10px;align-items:center;">
             <div id="modal-saveas-path" style="font-family:monospace;font-size:0.9rem;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Loading...</div>
-        </div >
+        </div>
         <div id="modal-saveas-list" style="height:250px;overflow-y:auto;border:1px solid var(--border);border-radius:4px;padding:10px;margin-bottom:1rem;">
             Loading...
         </div>
@@ -1770,7 +1817,7 @@ async function openSaveAsModal() {
             <input type="text" id="modal-saveas-input" class="comp-input" style="flex:1;" placeholder="filename.json" value="${initialFilename}">
             <button id="modal-saveas-btn" class="btn-primary">Save</button>
         </div>
-`, true);
+            `, true);
 
     const listEl = document.getElementById('modal-saveas-list');
     const pathEl = document.getElementById('modal-saveas-path');
@@ -1781,7 +1828,7 @@ async function openSaveAsModal() {
 
     async function loadPath(path = '') {
         try {
-            const res = await fetch(`api.php?action=browse&path=${encodeURIComponent(path)}`);
+            const res = await fetch(`api.php ? action = browse & path=${encodeURIComponent(path)} `);
             const data = await res.json();
             currentPath = data.current_path;
             pathEl.textContent = currentPath;
@@ -1868,7 +1915,7 @@ async function openSaveOptionsModal() {
     }
 
     openModal('Save Dashboard', `
-    <div style="margin-bottom:1.5rem;">
+        <div style="margin-bottom:1.5rem;">
             <div style="margin-bottom:1rem;">
                 <p style="color:var(--text-muted);font-size:0.85rem;margin-bottom:0.3rem;">Save Location (Folder):</p>
                 <div style="font-family:monospace;background-color:var(--bg-card);padding:0.5rem;border:1px solid var(--border);border-radius:4px;word-break:break-all;font-size:0.85rem;color:var(--text-muted);">
@@ -1881,7 +1928,7 @@ async function openSaveOptionsModal() {
                     ${initialFilename}
                 </div>
             </div>
-        </div >
+        </div>
         <div style="display:flex;gap:10px;justify-content:center;">
             <button id="modal-opt-overwrite" class="btn-primary" style="padding:0.8rem 1.5rem;"><i class="fa-solid fa-save"></i> Overwrite</button>
             <button id="modal-opt-saveas" class="btn-primary" style="padding:0.8rem 1.5rem;background-color:var(--text-muted);border:none;"><i class="fa-solid fa-file-export"></i> Save As...</button>
@@ -1889,7 +1936,7 @@ async function openSaveOptionsModal() {
         <div style="text-align:center;margin-top:1rem;">
             <button id="modal-opt-cancel" style="background:none;border:none;color:var(--text-muted);cursor:pointer;text-decoration:underline;">Cancel</button>
         </div>
-`, true); // Hide default footer
+            `, true); // Hide default footer
 
     document.getElementById('modal-opt-overwrite').onclick = async () => {
         await saveConfig(null); // Overwrite current

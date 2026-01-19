@@ -7,6 +7,7 @@
     <title>yoAdmin Viewer</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="../shared/theme.css">
     <link rel="stylesheet" href="style.css">
     <style>
@@ -915,9 +916,163 @@
                         </div>
                     `;
                 }
+                case 'chart':
+                    return `
+                        <div class="comp-chart-wrapper">
+                            <div class="comp-chart-label" style="font-weight:600;font-size:0.9rem;color:var(--text);margin-bottom:8px;">${label}</div>
+                            <div class="comp-chart-container">
+                                <canvas id="canvas-${comp.id}" class="comp-chart-canvas" 
+                                    data-type="${comp.chartType || 'bar'}"
+                                    data-target="${comp.targetTableId || ''}"
+                                    data-col="${comp.dataColumn || ''}"
+                                    data-label="${comp.labelColumn || ''}"></canvas>
+                            </div>
+                        </div>
+                    `;
                 default:
                     return `<span>${label}</span>`;
             }
+        }
+
+        // ==========================================
+        // Chart Integration
+        // ==========================================
+        const yoCharts = {};
+
+        function updateChart(tableId) {
+            const charts = document.querySelectorAll(`.comp-chart-canvas[data-target="${tableId}"]`);
+            if (charts.length === 0) return;
+            
+            // Get data from yoTable
+            if (typeof yoTable === 'undefined') return;
+            const data = yoTable.getData(tableId);
+            const columns = yoTable._getState(tableId)?.columns || [];
+            if (!data || data.length === 0) return;
+
+            charts.forEach(canvas => {
+                const type = canvas.dataset.type || 'bar';
+                const valCol = canvas.dataset.col;
+                const labelCol = canvas.dataset.label;
+                
+                // Extract values
+                let values = [];
+                let labels = [];
+                
+                // Determine column indices if using array-of-arrays
+                const valIdx = columns.indexOf(valCol);
+                const labelIdx = columns.indexOf(labelCol);
+                
+                data.forEach((row, i) => {
+                    // Extract value
+                    let v = null;
+                    if (Array.isArray(row)) {
+                        if (valIdx >= 0) v = row[valIdx];
+                    } else {
+                        v = row[valCol];
+                    }
+                    
+                    // Extract label
+                    let l = (i + 1); // Default: row number
+                    if (labelCol) {
+                        if (Array.isArray(row)) {
+                            if (labelIdx >= 0) l = row[labelIdx];
+                        } else {
+                            l = row[labelCol];
+                        }
+                    }
+                    
+                    if (v != null && v !== '' && !isNaN(v)) {
+                        values.push(Number(v));
+                        labels.push(l);
+                    }
+                });
+                
+                if (values.length === 0) return;
+
+                // Prepare Chart Data
+                let chartData, chartLabels;
+                
+                if (type === 'histogram') {
+                     // Binning Logic
+                     const min = Math.min(...values);
+                     const max = Math.max(...values);
+                     const binCount = Math.min(10, values.length); 
+                     const range = max - min;
+                     const step = range > 0 ? range / binCount : 1;
+                     
+                     const bins = new Array(binCount).fill(0);
+                     const binLabels = [];
+                     
+                     for(let i=0; i<binCount; i++) {
+                         const start = min + i*step;
+                         const end = min + (i+1)*step;
+                         binLabels.push(`${start.toFixed(1)} - ${end.toFixed(1)}`);
+                     }
+                     
+                     values.forEach(v => {
+                         let idx = Math.floor((v - min) / step);
+                         if (idx >= binCount) idx = binCount - 1;
+                         if (idx < 0) idx = 0;
+                         bins[idx]++;
+                     });
+                     
+                     chartData = bins;
+                     chartLabels = binLabels;
+                } else {
+                     chartData = values;
+                     chartLabels = labels;
+                }
+
+                // Color generation
+                const bgColors = type === 'pie' 
+                    ? chartData.map(() => `hsl(${Math.random()*360}, 70%, 60%)`) 
+                    : 'rgba(54, 162, 235, 0.6)';
+                
+                const borderColors = type === 'pie'
+                    ? 'white'
+                    : 'rgba(54, 162, 235, 1)';
+
+                // Destroy existing
+                if (yoCharts[canvas.id]) {
+                    yoCharts[canvas.id].destroy();
+                }
+
+                // Render Chart
+                yoCharts[canvas.id] = new Chart(canvas, {
+                    type: type === 'histogram' ? 'bar' : type,
+                    data: {
+                        labels: chartLabels,
+                        datasets: [{
+                            label: valCol || 'Frequency',
+                            data: chartData,
+                            backgroundColor: bgColors,
+                            borderColor: borderColors,
+                            borderWidth: 1,
+                            barPercentage: type === 'histogram' ? 1.0 : 0.9,
+                            categoryPercentage: type === 'histogram' ? 1.0 : 0.8
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: type === 'pie' }
+                        },
+                        scales: type === 'pie' ? {} : {
+                            y: { beginAtZero: true }
+                        }
+                    }
+                });
+            });
+        }
+
+        // Hook into yoTable.refresh to auto-update charts
+        if (typeof yoTable !== 'undefined') {
+            const originalRefresh = yoTable.refresh;
+            yoTable.refresh = function(tableId) {
+                originalRefresh.call(yoTable, tableId);
+                updateChart(tableId);
+            };
         }
 
         init();

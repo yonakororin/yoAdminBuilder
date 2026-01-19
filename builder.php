@@ -9,6 +9,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="../shared/theme.css">
     <link rel="stylesheet" href="style.css">
     <!-- CodeMirror -->
@@ -74,6 +75,7 @@
                             <div class="tool" data-type="checklist" draggable="true"><i class="fa-solid fa-list-check"></i> Checklist</div>
                             <div class="tool" data-type="input" draggable="true"><i class="fa-solid fa-keyboard"></i> Input</div>
                             <div class="tool" data-type="select" draggable="true"><i class="fa-solid fa-caret-down"></i> Select</div>
+                            <div class="tool" data-type="chart" draggable="true"><i class="fa-solid fa-chart-simple"></i> Chart</div>
                             <div class="tool" data-type="datepicker" draggable="true"><i class="fa-solid fa-calendar"></i> Calendar</div>
                             <div class="tool" data-type="modal" draggable="true"><i class="fa-regular fa-window-restore"></i> Modal</div>
                             <div class="tool" data-type="table" draggable="true"><i class="fa-solid fa-table"></i> Table</div>
