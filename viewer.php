@@ -971,19 +971,23 @@
                         v = row[valCol];
                     }
                     
-                    // Extract label
-                    let l = (i + 1); // Default: row number
-                    if (labelCol) {
+                    // Extract label from specified column
+                    let l = null;
+                    if (labelCol && labelCol.trim() !== '') {
                         if (Array.isArray(row)) {
                             if (labelIdx >= 0) l = row[labelIdx];
                         } else {
                             l = row[labelCol];
                         }
                     }
+                    // Fallback to row number if no label column or value is empty
+                    if (l == null || l === '') {
+                        l = `Row ${i + 1}`;
+                    }
                     
                     if (v != null && v !== '' && !isNaN(v)) {
                         values.push(Number(v));
-                        labels.push(l);
+                        labels.push(String(l));
                     }
                 });
                 
