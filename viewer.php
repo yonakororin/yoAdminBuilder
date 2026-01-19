@@ -71,7 +71,12 @@
             </header>
             <div id="empty-state" class="empty-state"><p>Select a submenu to view.</p></div>
             <div id="workspace" class="workspace hidden">
-                <div id="global-header" class="global-area"></div>
+                <div id="global-header-wrapper" class="global-header-wrapper">
+                    <div id="global-header" class="global-area"></div>
+                    <div class="global-header-toggle" onclick="toggleGlobalHeader()">
+                        <i class="fa-solid fa-caret-up" id="global-header-toggle-icon"></i>
+                    </div>
+                </div>
                 <div class="tabs-bar">
                     <div id="tabs" class="tabs"></div>
                 </div>
@@ -121,6 +126,23 @@
                 el.innerHTML = marked.parse(text);
             } catch (e) {
                 el.innerHTML = '<p style="color:red">Error loading guide: ' + e.message + '</p>';
+            }
+        }
+        
+        // Toggle global header visibility
+        function toggleGlobalHeader() {
+            const wrapper = document.getElementById('global-header-wrapper');
+            const icon = document.getElementById('global-header-toggle-icon');
+            const header = document.getElementById('global-header');
+            
+            if (wrapper.classList.contains('collapsed')) {
+                wrapper.classList.remove('collapsed');
+                icon.className = 'fa-solid fa-caret-up';
+                header.style.display = '';
+            } else {
+                wrapper.classList.add('collapsed');
+                icon.className = 'fa-solid fa-caret-down';
+                header.style.display = 'none';
             }
         }
 
