@@ -1120,11 +1120,10 @@ label {
 
 .comp-table-header {
     flex-shrink: 0;
-    padding: 8px 12px;
+    padding: 4px 8px 2px 8px;
     background: var(--bg-card);
-    border-bottom: 1px solid var(--border);
     display: flex;
-    align-items: center;
+    align-items: baseline;
     justify-content: space-between;
     gap: 12px;
 }
