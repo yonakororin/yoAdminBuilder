@@ -1123,7 +1123,7 @@ label {
     padding: 4px 8px 2px 8px;
     background: var(--bg-card);
     display: flex;
-    align-items: baseline;
+    align-items: center;
     justify-content: space-between;
     gap: 12px;
 }
@@ -1144,11 +1144,87 @@ label {
     background: var(--bg);
     color: var(--text);
     font-size: 0.85rem;
+    align-self: center;
+    margin: 0;
+    vertical-align: middle;
 }
 
 .comp-table-search-input:focus {
     outline: none;
     border-color: var(--primary);
+}
+
+.comp-table-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.comp-table-download-dropdown {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.comp-table-download-btn {
+    padding: 6px 10px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background: var(--bg);
+    color: var(--text);
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    height: auto;
+}
+
+.comp-table-download-btn:hover {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+}
+
+.comp-table-download-menu {
+    display: none;
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 4px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 100;
+    min-width: 100px;
+}
+
+.comp-table-download-dropdown.open .comp-table-download-menu {
+    display: block;
+}
+
+.comp-table-download-menu>div {
+    padding: 8px 12px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap;
+}
+
+.comp-table-download-menu>div:hover {
+    background: var(--bg-hover);
+}
+
+.comp-table-download-menu>div:first-child {
+    border-radius: 4px 4px 0 0;
+}
+
+.comp-table-download-menu>div:last-child {
+    border-radius: 0 0 4px 4px;
 }
 
 .comp-table table {

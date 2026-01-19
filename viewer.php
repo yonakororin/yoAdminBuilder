@@ -179,6 +179,63 @@
                 this.search(tableId, event.target.value);
             },
             
+            // Download table data
+            download(tableId, format) {
+                const st = this._getState(tableId);
+                const el = document.getElementById(tableId);
+                const label = el?.dataset.label || 'table';
+                const filename = `${label}_${new Date().toISOString().slice(0,10)}`;
+                
+                let content, mimeType, ext;
+                
+                switch(format) {
+                    case 'csv':
+                        content = this._toCSV(st.originalData, st.columns, ',');
+                        mimeType = 'text/csv';
+                        ext = 'csv';
+                        break;
+                    case 'tsv':
+                        content = this._toCSV(st.originalData, st.columns, '\t');
+                        mimeType = 'text/tab-separated-values';
+                        ext = 'tsv';
+                        break;
+                    case 'json':
+                        content = JSON.stringify(st.originalData, null, 2);
+                        mimeType = 'application/json';
+                        ext = 'json';
+                        break;
+                    default:
+                        return;
+                }
+                
+                const blob = new Blob([content], { type: mimeType });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `${filename}.${ext}`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            },
+            
+            // Convert data to CSV/TSV format
+            _toCSV(data, columns, separator) {
+                const header = columns.join(separator);
+                const rows = data.map(row => {
+                    return columns.map(col => {
+                        const val = Array.isArray(row) ? row[columns.indexOf(col)] : row[col];
+                        let str = String(val ?? '');
+                        // Escape quotes and wrap in quotes if contains separator or newline
+                        if (str.includes(separator) || str.includes('\n') || str.includes('"')) {
+                            str = '"' + str.replace(/"/g, '""') + '"';
+                        }
+                        return str;
+                    }).join(separator);
+                });
+                return header + '\n' + rows.join('\n');
+            },
+            
             // Calculate and set page size based on available container height
             autoFitPageSize(tableId) {
                 const el = document.getElementById(tableId);
@@ -366,9 +423,27 @@
                     console.log('[yoTable] Creating header for', tableId, 'label:', tableLabel, 'dataset:', el.dataset);
                     tableHeader.innerHTML = `
                         <span class="comp-table-title">${tableLabel}</span>
-                        <input type="text" class="comp-table-search-input" placeholder="Search..." 
-                            oninput="yoTable._onSearchInput('${tableId}', event)"
-                            value="${st.searchQuery}">
+                        <div class="comp-table-controls">
+                            <input type="text" class="comp-table-search-input" placeholder="Search..." 
+                                oninput="yoTable._onSearchInput('${tableId}', event)"
+                                value="${st.searchQuery}">
+                            <div class="comp-table-download-dropdown">
+                                <button class="comp-table-download-btn" onclick="this.parentElement.classList.toggle('open')">
+                                    <i class="fa-solid fa-download"></i> Download
+                                </button>
+                                <div class="comp-table-download-menu">
+                                    <div onclick="yoTable.download('${tableId}','csv'); this.closest('.comp-table-download-dropdown').classList.remove('open');">
+                                        <i class="fa-solid fa-file-csv"></i> CSV
+                                    </div>
+                                    <div onclick="yoTable.download('${tableId}','tsv'); this.closest('.comp-table-download-dropdown').classList.remove('open');">
+                                        <i class="fa-solid fa-file-lines"></i> TSV
+                                    </div>
+                                    <div onclick="yoTable.download('${tableId}','json'); this.closest('.comp-table-download-dropdown').classList.remove('open');">
+                                        <i class="fa-solid fa-file-code"></i> JSON
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     `;
                     el.insertBefore(tableHeader, el.firstChild);
                 }
