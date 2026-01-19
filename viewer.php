@@ -138,6 +138,7 @@
                         page: 1,
                         pageSize: parseInt(el?.dataset.pagesize) || 10,
                         columns: JSON.parse(el?.dataset.columns || '[]'),
+                        columnKeys: JSON.parse(el?.dataset.columnKeys || '[]'),
                         sortColumn: null,
                         sortDirection: 'asc' // 'asc' or 'desc'
                     };
@@ -369,10 +370,16 @@
                     st.sortDirection = 'asc';
                 }
                 
+                // Get the data key for this column
+                const colIdx = st.columns.indexOf(column);
+                const dataKey = (st.columnKeys && st.columnKeys.length > colIdx && st.columnKeys[colIdx]) 
+                    ? st.columnKeys[colIdx] 
+                    : column;
+                
                 // Sort data
                 st.data.sort((a, b) => {
-                    let valA = Array.isArray(a) ? a[st.columns.indexOf(column)] : a[column];
-                    let valB = Array.isArray(b) ? b[st.columns.indexOf(column)] : b[column];
+                    let valA = Array.isArray(a) ? a[colIdx] : a[dataKey];
+                    let valB = Array.isArray(b) ? b[colIdx] : b[dataKey];
                     
                     // Handle null/undefined
                     if (valA == null) valA = '';
@@ -539,8 +546,12 @@
                                     }).join('');
                                     return `<td>${btns}</td>`;
                                 }
-                                // Regular cell
-                                const val = Array.isArray(row) ? row[st.columns.indexOf(col)] : (row[col] ?? '');
+                                // Regular cell - use columnKeys for data key mapping
+                                const colIdx = st.columns.indexOf(col);
+                                const dataKey = (st.columnKeys && st.columnKeys.length > colIdx && st.columnKeys[colIdx]) 
+                                    ? st.columnKeys[colIdx] 
+                                    : col;
+                                const val = Array.isArray(row) ? row[colIdx] : (row[dataKey] ?? '');
                                 return `<td>${val}</td>`;
                             }).join('');
                             return `<tr data-row-index="${globalIndex}">${cells}</tr>`;
@@ -906,12 +917,13 @@
                 case 'table': {
                     const tableId = comp.customId || 'table-' + comp.id;
                     const columns = comp.columns || ['Column 1', 'Column 2'];
+                    const columnKeys = comp.columnKeys || [];
                     const pageSize = comp.pageSize || 10;
                     const tableLabel = comp.label || '';
                     const headerRow = columns.map(c => `<th>${c}</th>`).join('');
                     
                     return `
-                        <div id="${tableId}" class="comp-table" data-pagesize="${pageSize}" data-columns='${JSON.stringify(columns)}' data-label="${tableLabel}">
+                        <div id="${tableId}" class="comp-table" data-pagesize="${pageSize}" data-columns='${JSON.stringify(columns)}' data-column-keys='${JSON.stringify(columnKeys)}' data-label="${tableLabel}">
                             <div class="comp-loading-inline" id="${tableId}-loading">
                                 <i class="fa-solid fa-spinner fa-spin"></i> Loading...
                             </div>

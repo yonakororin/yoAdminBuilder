@@ -800,9 +800,15 @@ function openComponentSettings(comp) {
     // Table specific
     if (comp.type === 'table') {
         html += `
-                <div class="settings-group">
-                <label>Columns (comma separated):</label>
-                <input type="text" id="comp-table-columns" placeholder="Name, Age, Email" value="${(comp.columns || []).join(', ')}">
+            <div class="settings-group">
+                <label>Display Columns (comma separated):</label>
+                <input type="text" id="comp-table-columns" placeholder="名前, 年齢, メール" value="${(comp.columns || []).join(', ')}">
+                <small style="color:var(--text-muted)">表示するカラム名（ヘッダーに表示される）</small>
+            </div>
+            <div class="settings-group">
+                <label>Data Keys (comma separated):</label>
+                <input type="text" id="comp-table-keys" placeholder="Name, Age, Email" value="${(comp.columnKeys || []).join(', ')}">
+                <small style="color:var(--text-muted)">データのキー名（表示カラムと同じ順序で指定）</small>
             </div>
             <div class="settings-group">
                 <label>Rows per page:</label>
@@ -1013,7 +1019,9 @@ function saveComponentState() {
     // Table specific
     if (currentEditComp.type === 'table') {
         const columnsText = document.getElementById('comp-table-columns')?.value || '';
-        currentEditComp.columns = columnsText.split(',').map(c => c.trim()).filter(c => c !== '');
+        currentEditComp.columns = columnsText.split(',').map(c => c.trim().replace(/^["']|["']$/g, '')).filter(c => c !== '');
+        const keysText = document.getElementById('comp-table-keys')?.value || '';
+        currentEditComp.columnKeys = keysText.split(',').map(c => c.trim().replace(/^["']|["']$/g, '')).filter(c => c !== '');
         currentEditComp.pageSize = parseInt(document.getElementById('comp-table-pagesize')?.value) || 10;
     }
 
