@@ -369,6 +369,10 @@ function createGlobalComponent(comp, area) {
         openComponentSettings(comp);
     });
 
+    // Add grid-item class for shared drag/resize behavior if possible, 
+    // BUT we need to distinguish global/local for state updates.
+    // For now, let's keep it separate but mimic the style.
+
     return el;
 }
 
@@ -465,13 +469,13 @@ function getComponentContent(comp) {
             }
         case 'checklist': {
             const items = comp.items || ['Option 1', 'Option 2', 'Option 3'];
-            const mode = comp.checklistMode || 'multi'; // 'single' (radio behavior) or 'multi' (checkbox)
+            const mode = comp.checklistMode || 'single'; // 'single' (radio behavior) or 'multi' (checkbox)
             const inputType = mode === 'single' ? 'radio' : 'checkbox';
             const nameAttr = mode === 'single' ? `name="chk-${comp.id}"` : '';
 
             let listHtml = items.map((item, idx) => `
                 <label class="checklist-item" style="display:flex;align-items:center;gap:6px;margin-bottom:4px;cursor:pointer;">
-                    <input type="${inputType}" ${nameAttr} id="${comp.id}-${idx}" style="margin:0;width:auto;cursor:pointer;">
+                    <input type="${inputType}" ${nameAttr} id="${comp.id}-${idx}" style="margin:0;width:auto;cursor:pointer;" ${(mode === 'single' && idx === 0) ? 'checked' : ''}>
                     <span>${item}</span>
                 </label>
             `).join('');
@@ -774,8 +778,8 @@ function openComponentSettings(comp) {
             <div class="settings-group">
                 <label>Mode:</label>
                 <select id="comp-checklist-mode">
-                    <option value="multi" ${(!comp.checklistMode || comp.checklistMode === 'multi') ? 'selected' : ''}>Multi Select (Checkbox)</option>
-                    <option value="single" ${(comp.checklistMode === 'single') ? 'selected' : ''}>Single Select (Toggle/Radio)</option>
+                    <option value="single" ${(!comp.checklistMode || comp.checklistMode === 'single') ? 'selected' : ''}>Single Select (Toggle/Radio)</option>
+                    <option value="multi" ${(comp.checklistMode === 'multi') ? 'selected' : ''}>Multi Select (Checkbox)</option>
                 </select>
             </div>
             <div class="settings-group">
@@ -1349,7 +1353,8 @@ function setupToolboxDnD() {
             id: 'comp-' + Date.now(),
             type,
             label: typeLabels[type] || type,
-            labelPosition: 'left', // 'left' or 'right'
+            labelPosition: 'left', // 'left' or 'right',
+            checklistMode: type === 'checklist' ? 'single' : undefined,
             x: Math.max(0, Math.min(x, 32)), // Keep in bounds (48 - 16)
             y: Math.max(0, y),
             w: (type === 'checkbox' || type === 'toggle') ? 12 : 16,
@@ -1381,6 +1386,7 @@ function setupGlobalAreaDnD(gridId, areaType) {
             e.dataTransfer.setData('reorder-id', comp.dataset.id);
             e.dataTransfer.setData('source-area', areaType);
             e.dataTransfer.effectAllowed = 'move';
+            areaGrid.classList.add('drag-over');
         }
     });
 
@@ -1498,7 +1504,6 @@ function setupGlobalAreaDnD(gridId, areaType) {
     });
 }
 
-// ============================================================
 // GRID ITEM DRAG & RESIZE
 // ============================================================
 function setupGridInteraction() {

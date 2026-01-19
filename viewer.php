@@ -851,13 +851,13 @@
                     }
                 case 'checklist': {
                     const items = comp.items || ['Option 1', 'Option 2', 'Option 3'];
-                    const mode = comp.checklistMode || 'multi'; 
+                    const mode = comp.checklistMode || 'single'; 
                     const inputType = mode === 'single' ? 'radio' : 'checkbox';
                     const nameAttr = mode === 'single' ? `name="chk-${comp.customId || Math.random().toString(36).substr(2, 9)}"` : ''; 
                     
                     let listHtml = items.map((item, idx) => `
                         <label class="checklist-item" style="display:flex;align-items:center;gap:6px;margin-bottom:4px;cursor:pointer;">
-                            <input type="${inputType}" ${nameAttr} id="${comp.customId || 'chk'}-${idx}" style="margin:0;width:auto;cursor:pointer;">
+                            <input type="${inputType}" ${nameAttr} id="${comp.customId || 'chk'}-${idx}" style="margin:0;width:auto;cursor:pointer;" ${(mode === 'single' && idx === 0) ? 'checked' : ''}>
                             <span>${item}</span>
                         </label>
                     `).join('');
