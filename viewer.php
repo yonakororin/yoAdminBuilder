@@ -549,6 +549,14 @@
                 } else {
                     console.warn('[yoTable] tbody not found for table:', tableId);
                 }
+                
+                // Hide loading, show table and pagination
+                const loadingEl = document.getElementById(`${tableId}-loading`);
+                if (loadingEl) loadingEl.style.display = 'none';
+                const tableEl = el.querySelector('table');
+                if (tableEl) tableEl.style.display = '';
+                const paginationEl = el.querySelector('.comp-table-pagination');
+                if (paginationEl) paginationEl.style.display = '';
             }
         };
 
@@ -904,11 +912,14 @@
                     
                     return `
                         <div id="${tableId}" class="comp-table" data-pagesize="${pageSize}" data-columns='${JSON.stringify(columns)}' data-label="${tableLabel}">
-                            <table>
+                            <div class="comp-loading-inline" id="${tableId}-loading">
+                                <i class="fa-solid fa-spinner fa-spin"></i> Loading...
+                            </div>
+                            <table style="display:none;">
                                 <thead><tr>${headerRow}</tr></thead>
                                 <tbody></tbody>
                             </table>
-                            <div class="comp-table-pagination">
+                            <div class="comp-table-pagination" style="display:none;">
                                 <button onclick="yoTable.prevPage('${tableId}')">&laquo; Prev</button>
                                 <span class="page-info">Page 1</span>
                                 <button onclick="yoTable.nextPage('${tableId}')">Next &raquo;</button>
@@ -921,7 +932,10 @@
                         <div class="comp-chart-wrapper">
                             <div class="comp-chart-label" style="font-weight:600;font-size:0.9rem;color:var(--text);margin-bottom:8px;">${label}</div>
                             <div class="comp-chart-container">
-                                <canvas id="canvas-${comp.id}" class="comp-chart-canvas" 
+                                <div class="comp-loading-inline" id="chart-${comp.id}-loading">
+                                    <i class="fa-solid fa-spinner fa-spin"></i> Loading...
+                                </div>
+                                <canvas id="canvas-${comp.id}" class="comp-chart-canvas" style="display:none;"
                                     data-type="${comp.chartType || 'bar'}"
                                     data-target="${comp.targetTableId || ''}"
                                     data-col="${comp.dataColumn || ''}"
@@ -1067,6 +1081,12 @@
                         }
                     }
                 });
+                
+                // Hide loading, show canvas
+                const compId = canvas.id.replace('canvas-', '');
+                const chartLoadingEl = document.getElementById(`chart-${compId}-loading`);
+                if (chartLoadingEl) chartLoadingEl.style.display = 'none';
+                canvas.style.display = '';
             });
         }
 
