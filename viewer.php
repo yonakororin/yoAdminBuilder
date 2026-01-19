@@ -236,6 +236,45 @@
                 return header + '\n' + rows.join('\n');
             },
             
+            // Export to Google Spreadsheet
+            async exportToGoogleSheet(tableId) {
+                const st = this._getState(tableId);
+                const el = document.getElementById(tableId);
+                const label = el?.dataset.label || 'table';
+                
+                // Prompt for spreadsheet details
+                const spreadsheetId = prompt('Google Spreadsheet ID を入力してください:');
+                if (!spreadsheetId) return;
+                
+                const sheetName = prompt('シート名を入力してください:', label);
+                if (!sheetName) return;
+                
+                // Convert data to CSV
+                const csvContent = this._toCSV(st.originalData, st.columns, ',');
+                
+                // Send to backend
+                try {
+                    const response = await fetch('api.php?action=exportToGoogleSheet', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            spreadsheetId: spreadsheetId,
+                            sheetName: sheetName,
+                            csvData: csvContent
+                        })
+                    });
+                    
+                    const result = await response.json();
+                    if (result.success) {
+                        alert('Google Spreadsheet へのエクスポートが完了しました');
+                    } else {
+                        alert('エラー: ' + (result.error || 'Unknown error'));
+                    }
+                } catch (e) {
+                    alert('エクスポートに失敗しました: ' + e.message);
+                }
+            },
+            
             // Calculate and set page size based on available container height
             autoFitPageSize(tableId) {
                 const el = document.getElementById(tableId);
@@ -429,7 +468,7 @@
                                 value="${st.searchQuery}">
                             <div class="comp-table-download-dropdown">
                                 <button class="comp-table-download-btn" onclick="this.parentElement.classList.toggle('open')">
-                                    <i class="fa-solid fa-download"></i> Download
+                                    <i class="fa-solid fa-file-export"></i> Export
                                 </button>
                                 <div class="comp-table-download-menu">
                                     <div onclick="yoTable.download('${tableId}','csv'); this.closest('.comp-table-download-dropdown').classList.remove('open');">
@@ -440,6 +479,10 @@
                                     </div>
                                     <div onclick="yoTable.download('${tableId}','json'); this.closest('.comp-table-download-dropdown').classList.remove('open');">
                                         <i class="fa-solid fa-file-code"></i> JSON
+                                    </div>
+                                    <div class="comp-table-menu-separator"></div>
+                                    <div onclick="yoTable.exportToGoogleSheet('${tableId}'); this.closest('.comp-table-download-dropdown').classList.remove('open');">
+                                        <i class="fa-brands fa-google-drive"></i> Google Spreadsheet
                                     </div>
                                 </div>
                             </div>

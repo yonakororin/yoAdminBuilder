@@ -78,6 +78,68 @@ if (isset($_GET['action']) && $_GET['action'] === 'readfile') {
     exit;
 }
 
+// Google Spreadsheet export action
+if (isset($_GET['action']) && $_GET['action'] === 'exportToGoogleSheet') {
+    header('Content-Type: application/json');
+    
+    $input = json_decode(file_get_contents('php://input'), true);
+    $spreadsheetId = $input['spreadsheetId'] ?? '';
+    $sheetName = $input['sheetName'] ?? '';
+    $csvData = $input['csvData'] ?? '';
+    
+    if (empty($spreadsheetId) || empty($sheetName) || empty($csvData)) {
+        echo json_encode(['success' => false, 'error' => 'Missing required parameters']);
+        exit;
+    }
+    
+    // Write CSV to temp file
+    $tempFile = tempnam(sys_get_temp_dir(), 'export_');
+    file_put_contents($tempFile, $csvData);
+    
+    // Find upload script and credentials
+    $projectRoot = dirname(__DIR__);
+    $credentialsPath = $projectRoot . '/config/service_account.json';
+    $scriptPath = $projectRoot . '/db/upload_to_sheet.py';
+    
+    // Fallback paths
+    if (!file_exists($scriptPath)) {
+        $scriptPath = $projectRoot . '/yoAnalyticsEditor/db/upload_to_sheet.py';
+    }
+    
+    if (!file_exists($credentialsPath)) {
+        unlink($tempFile);
+        echo json_encode(['success' => false, 'error' => 'Service account credentials not found at: ' . $credentialsPath]);
+        exit;
+    }
+    
+    if (!file_exists($scriptPath)) {
+        unlink($tempFile);
+        echo json_encode(['success' => false, 'error' => 'Upload script not found']);
+        exit;
+    }
+    
+    // Execute Python script
+    $cmd = "python3 " . escapeshellarg($scriptPath) . 
+           " --csv " . escapeshellarg($tempFile) . 
+           " --creds " . escapeshellarg($credentialsPath) . 
+           " --id " . escapeshellarg($spreadsheetId) . 
+           " --sheet " . escapeshellarg($sheetName);
+    
+    $output = [];
+    $returnVar = 0;
+    exec($cmd . " 2>&1", $output, $returnVar);
+    
+    // Cleanup temp file
+    unlink($tempFile);
+    
+    if ($returnVar !== 0) {
+        echo json_encode(['success' => false, 'error' => implode("\n", $output)]);
+    } else {
+        echo json_encode(['success' => true, 'output' => implode("\n", $output)]);
+    }
+    exit;
+}
+
 // Default file if none specified
 $filename = 'data.json';
 

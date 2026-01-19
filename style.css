@@ -1227,6 +1227,18 @@ label {
     border-radius: 0 0 4px 4px;
 }
 
+.comp-table-menu-separator {
+    height: 1px;
+    background: var(--border);
+    margin: 4px 0;
+    padding: 0 !important;
+    pointer-events: none;
+}
+
+.comp-table-menu-separator:hover {
+    background: var(--border) !important;
+}
+
 .comp-table table {
     width: 100%;
     border-collapse: collapse;
