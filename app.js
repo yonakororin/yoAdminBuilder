@@ -98,6 +98,17 @@ async function loadConfigFile(filename) {
 
     renderSidebar();
 
+    // Auto-expand global header if it has components
+    if (state.globalHeader?.components?.length > 0) {
+        const headerEditor = document.getElementById('global-header-editor');
+        const headerToggle = document.getElementById('toggle-global-header');
+        if (headerEditor && headerToggle) {
+            headerEditor.classList.remove('hidden');
+            headerToggle.classList.add('active');
+        }
+    }
+
+    renderGlobalAreas();
     // Reset UI to empty state
     emptyStateEl.classList.remove('hidden');
     workspaceEl.classList.add('hidden');
