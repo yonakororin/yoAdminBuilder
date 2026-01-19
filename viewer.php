@@ -130,6 +130,8 @@
                     const el = document.getElementById(tableId);
                     this._state[tableId] = {
                         data: [],
+                        originalData: [], // Keep original for filtering
+                        searchQuery: '',
                         page: 1,
                         pageSize: parseInt(el?.dataset.pagesize) || 10,
                         columns: JSON.parse(el?.dataset.columns || '[]'),
@@ -142,11 +144,39 @@
             
             setData(tableId, data) {
                 const st = this._getState(tableId);
-                st.data = Array.isArray(data) ? data : [];
+                st.originalData = Array.isArray(data) ? [...data] : [];
+                st.data = [...st.originalData];
+                st.searchQuery = '';
                 st.page = 1;
                 // Auto-fit page size to container
                 this.autoFitPageSize(tableId);
                 this.refresh(tableId);
+            },
+            
+            // Search/filter data
+            search(tableId, query) {
+                const st = this._getState(tableId);
+                st.searchQuery = query.toLowerCase().trim();
+                
+                if (!st.searchQuery) {
+                    st.data = [...st.originalData];
+                } else {
+                    st.data = st.originalData.filter(row => {
+                        return st.columns.some(col => {
+                            const val = Array.isArray(row) ? row[st.columns.indexOf(col)] : row[col];
+                            return String(val ?? '').toLowerCase().includes(st.searchQuery);
+                        });
+                    });
+                }
+                
+                st.page = 1;
+                this.autoFitPageSize(tableId);
+                this.refresh(tableId);
+            },
+            
+            // Handle search input
+            _onSearchInput(tableId, event) {
+                this.search(tableId, event.target.value);
             },
             
             // Calculate and set page size based on available container height
@@ -300,6 +330,7 @@
                     console.error(`[yoTable] Table with ID "${tableId}" not found.`);
                     return;
                 }
+                console.log('[yoTable] refresh - el:', el, 'outerHTML:', el.outerHTML.substring(0, 200));
                 
                 const thead = el.querySelector('thead tr');
                 const tbody = el.querySelector('tbody');
@@ -323,7 +354,23 @@
                 
                 // Update page info
                 if (pageInfo) {
-                    pageInfo.textContent = `Page ${st.page} / ${maxPage}`;
+                    pageInfo.textContent = `Page ${st.page} / ${maxPage} (${st.data.length} items)`;
+                }
+                
+                // Update or create header with label and search input
+                let tableHeader = el.querySelector('.comp-table-header');
+                if (!tableHeader) {
+                    tableHeader = document.createElement('div');
+                    tableHeader.className = 'comp-table-header';
+                    const tableLabel = el.dataset.label || '';
+                    console.log('[yoTable] Creating header for', tableId, 'label:', tableLabel, 'dataset:', el.dataset);
+                    tableHeader.innerHTML = `
+                        <span class="comp-table-title">${tableLabel}</span>
+                        <input type="text" class="comp-table-search-input" placeholder="Search..." 
+                            oninput="yoTable._onSearchInput('${tableId}', event)"
+                            value="${st.searchQuery}">
+                    `;
+                    el.insertBefore(tableHeader, el.firstChild);
                 }
                 
                 // Render rows for current page
@@ -515,9 +562,9 @@
             const t = tabs.find(x => x.id === state.activeTabId);
             const g = document.getElementById('grid');
             g.innerHTML = (t?.components || []).map(c => {
-                // For modal/loading, putting ID on wrapper causes collision with overlay ID.
-                const isOverlay = c.type === 'modal' || c.type === 'loading';
-                const customId = (c.customId && !isOverlay) ? `id="${c.customId}"` : '';
+                // For modal/loading/table, putting ID on wrapper causes collision with inner component ID.
+                const hasInnerIdComponent = c.type === 'modal' || c.type === 'loading' || c.type === 'table';
+                const customId = (c.customId && !hasInnerIdComponent) ? `id="${c.customId}"` : '';
                 const customClass = c.customClass ? c.customClass : '';
                 return `
                 <div class="grid-item ${customClass}" ${customId} style="grid-column:${(c.x||0)+1}/span ${c.w||4};grid-row:${(c.y||0)+1}/span ${c.h||2}">
@@ -661,10 +708,11 @@
                     const tableId = comp.customId || 'table-' + comp.id;
                     const columns = comp.columns || ['Column 1', 'Column 2'];
                     const pageSize = comp.pageSize || 10;
+                    const tableLabel = comp.label || '';
                     const headerRow = columns.map(c => `<th>${c}</th>`).join('');
                     
                     return `
-                        <div id="${tableId}" class="comp-table" data-pagesize="${pageSize}" data-columns='${JSON.stringify(columns)}'>
+                        <div id="${tableId}" class="comp-table" data-pagesize="${pageSize}" data-columns='${JSON.stringify(columns)}' data-label="${tableLabel}">
                             <table>
                                 <thead><tr>${headerRow}</tr></thead>
                                 <tbody></tbody>

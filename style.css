@@ -1118,6 +1118,40 @@ label {
     overflow: hidden;
 }
 
+.comp-table-header {
+    flex-shrink: 0;
+    padding: 8px 12px;
+    background: var(--bg-card);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.comp-table-title {
+    font-weight: 600;
+    font-size: 1rem;
+    color: var(--text);
+    white-space: nowrap;
+}
+
+.comp-table-search-input {
+    flex: 1;
+    max-width: 300px;
+    padding: 6px 10px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 0.85rem;
+}
+
+.comp-table-search-input:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
 .comp-table table {
     width: 100%;
     border-collapse: collapse;
