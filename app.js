@@ -11,7 +11,9 @@ const state = {
     selectedMenuId: null,
     selectedSubmenuId: null,
     activeTabId: null,
-    targetFile: 'admin_config.json'
+    targetFile: 'admin_config.json',
+    globalHeader: { components: [] },
+    globalFooter: { components: [] }
 };
 
 // --- DOM Elements ---
@@ -64,14 +66,20 @@ async function loadConfigFile(filename) {
             if (Array.isArray(data)) {
                 state.config = data;
                 state.brandTitle = 'yoAdmin';
+                state.globalHeader = { components: [] };
+                state.globalFooter = { components: [] };
             } else {
                 state.config = data.menus || [];
                 state.brandTitle = data.brandTitle || 'yoAdmin';
+                state.globalHeader = data.globalHeader || { components: [] };
+                state.globalFooter = data.globalFooter || { components: [] };
             }
         } else {
             console.warn('File not found or empty, starting with empty config');
             state.config = [];
             state.brandTitle = 'yoAdmin';
+            state.globalHeader = { components: [] };
+            state.globalFooter = { components: [] };
         }
     } catch (e) {
         console.error('Load failed:', e);
@@ -125,10 +133,12 @@ async function saveConfig(targetFilename = null) {
     try {
         const formData = new FormData();
         formData.append('filename', filename);
-        // Save in new format with brandTitle and menus
+        // Save in new format with brandTitle, menus, and global areas
         const configData = {
             brandTitle: state.brandTitle,
-            menus: state.config
+            menus: state.config,
+            globalHeader: state.globalHeader,
+            globalFooter: state.globalFooter
         };
         formData.append('config', JSON.stringify(configData));
         const res = await fetch('api.php', { method: 'POST', body: formData });
@@ -294,6 +304,77 @@ function renderGrid() {
     });
 }
 
+// Render global header/footer areas in builder
+function renderGlobalAreas() {
+    const headerGrid = document.getElementById('global-header-grid');
+    const footerGrid = document.getElementById('global-footer-grid');
+
+    if (headerGrid) {
+        headerGrid.innerHTML = '';
+        (state.globalHeader?.components || []).forEach(comp => {
+            const el = createGlobalComponent(comp, 'header');
+            headerGrid.appendChild(el);
+        });
+    }
+
+    if (footerGrid) {
+        footerGrid.innerHTML = '';
+        (state.globalFooter?.components || []).forEach(comp => {
+            const el = createGlobalComponent(comp, 'footer');
+            footerGrid.appendChild(el);
+        });
+    }
+}
+
+// Create a component element for global area
+function createGlobalComponent(comp, area) {
+    const el = document.createElement('div');
+    el.className = 'global-component';
+    el.dataset.id = comp.id;
+    el.dataset.area = area;
+    el.draggable = true;
+
+    const icon = getComponentIcon(comp.type);
+    el.innerHTML = `
+        <i class="${icon}"></i>
+        <span>${comp.label || comp.type}</span>
+        <span class="remove-btn" title="Remove"><i class="fa-solid fa-times"></i></span>
+    `;
+
+    // Remove button
+    el.querySelector('.remove-btn').onclick = (e) => {
+        e.stopPropagation();
+        const arr = area === 'header' ? state.globalHeader.components : state.globalFooter.components;
+        const idx = arr.findIndex(c => c.id === comp.id);
+        if (idx >= 0) {
+            arr.splice(idx, 1);
+            renderGlobalAreas();
+        }
+    };
+
+    // Click to edit
+    el.addEventListener('click', (e) => {
+        if (e.target.closest('.remove-btn')) return;
+        openComponentSettings(comp);
+    });
+
+    return el;
+}
+
+// Get icon for component type
+function getComponentIcon(type) {
+    const icons = {
+        button: 'fa-solid fa-square',
+        label: 'fa-solid fa-tag',
+        input: 'fa-solid fa-i-cursor',
+        select: 'fa-solid fa-caret-down',
+        checkbox: 'fa-solid fa-check-square',
+        toggle: 'fa-solid fa-toggle-on',
+        html: 'fa-solid fa-code'
+    };
+    return icons[type] || 'fa-solid fa-puzzle-piece';
+}
+
 function createGridItem(comp) {
     const el = document.createElement('div');
     el.className = 'grid-item';
@@ -338,6 +419,14 @@ function getComponentContent(comp) {
             return pos === 'right'
                 ? `<label class="comp-input ${flexClass}"><input type="text" placeholder="..."><span>${label}</span></label>`
                 : `<label class="comp-input ${flexClass}"><span>${label}</span><input type="text" placeholder="..."></label>`;
+        case 'select': {
+            const options = comp.options || ['Option 1', 'Option 2', 'Option 3'];
+            const defaultVal = comp.defaultValue || '';
+            const optionsHtml = options.map(o => `<option${o === defaultVal ? ' selected' : ''}>${o}</option>`).join('');
+            return pos === 'right'
+                ? `<label class="comp-select ${flexClass}"><select>${optionsHtml}</select><span>${label}</span></label>`
+                : `<label class="comp-select ${flexClass}"><span>${label}</span><select>${optionsHtml}</select></label>`;
+        }
         case 'button':
             const btnStyle = comp.buttonStyle || 'normal'; // normal, info, danger, warning, disabled
             const disabledAttr = btnStyle === 'disabled' ? 'disabled' : '';
@@ -601,6 +690,21 @@ function openComponentSettings(comp) {
         `;
     }
 
+    // Select specific
+    if (comp.type === 'select') {
+        const optionsStr = (comp.options || ['Option 1', 'Option 2', 'Option 3']).join('\n');
+        html += `
+            <div class="settings-group">
+                <label>Options (one per line):</label>
+                <textarea id="comp-select-options" rows="5" placeholder="Option 1\nOption 2">${optionsStr}</textarea>
+            </div>
+            <div class="settings-group">
+                <label>Default Value:</label>
+                <input type="text" id="comp-select-default" value="${comp.defaultValue || ''}" placeholder="Option 1">
+            </div>
+        `;
+    }
+
     // HTML-specific fields (and Modal)
     if (comp.type === 'html' || comp.type === 'modal') {
         html += `
@@ -797,6 +901,13 @@ function saveComponentState() {
         currentEditComp.onClick = document.getElementById('comp-button-onclick')?.value || '';
     }
 
+    // Select specific
+    if (currentEditComp.type === 'select') {
+        const optionsText = document.getElementById('comp-select-options')?.value || '';
+        currentEditComp.options = optionsText.split('\n').filter(line => line.trim());
+        currentEditComp.defaultValue = document.getElementById('comp-select-default')?.value?.trim() || '';
+    }
+
     // HTML/Modal specific
     if (currentEditComp.type === 'html' || currentEditComp.type === 'modal') {
         const fileTabActive = document.querySelector('.html-tab[data-mode="file"]')?.classList.contains('active');
@@ -871,6 +982,32 @@ function handleModalConfirm() {
 // EVENT LISTENERS
 // ============================================================
 function setupEventListeners() {
+
+    // Global Header/Footer Toggle Buttons
+    // Global Header Toggle
+    document.getElementById('toggle-global-header')?.addEventListener('click', function () {
+        this.classList.toggle('active');
+        const editor = document.getElementById('global-header-editor');
+        editor?.classList.toggle('hidden');
+        renderGlobalAreas();
+    });
+
+    // Global Header Delete
+    // Global Header Delete
+    document.getElementById('delete-global-header')?.addEventListener('click', function (e) {
+        e.stopPropagation();
+        if (confirm('Global Header のコンポーネントをすべて削除してもよろしいですか？')) {
+            state.globalHeader.components = [];
+            renderGlobalAreas();
+
+            // Hide the editor and reset toggle button
+            const editor = document.getElementById('global-header-editor');
+            if (editor) editor.classList.add('hidden');
+
+            const toggle = document.getElementById('toggle-global-header');
+            if (toggle) toggle.classList.remove('active');
+        }
+    });
 
     // Brand Title Edit
     document.getElementById('brand-title')?.addEventListener('click', () => {
@@ -1214,6 +1351,139 @@ function setupToolboxDnD() {
         const el = createGridItem(newComp);
         gridEl.appendChild(el);
         console.log('Appended to grid');
+    });
+
+    // Global area drag & drop
+    setupGlobalAreaDnD('global-header-grid', 'header');
+    setupGlobalAreaDnD('global-footer-grid', 'footer');
+}
+
+// Setup drag & drop for global areas (with reordering)
+function setupGlobalAreaDnD(gridId, areaType) {
+    const areaGrid = document.getElementById(gridId);
+    if (!areaGrid) return;
+
+    // Handle reordering source
+    areaGrid.addEventListener('dragstart', e => {
+        const comp = e.target.closest('.global-component');
+        if (comp) {
+            e.dataTransfer.setData('reorder-id', comp.dataset.id);
+            e.dataTransfer.setData('source-area', areaType);
+            e.dataTransfer.effectAllowed = 'move';
+        }
+    });
+
+    areaGrid.addEventListener('dragover', e => {
+        e.preventDefault();
+
+        // Determine insertion point
+        const target = e.target.closest('.global-component');
+        const reorderId = e.dataTransfer.getData('reorder-id'); // Note: getData not always available in dragover
+
+        // Remove existing placeholders
+        const existingPlaceholder = areaGrid.querySelector('.drop-placeholder');
+        if (existingPlaceholder) existingPlaceholder.remove();
+
+        // Visual feedback
+        const placeholder = document.createElement('div');
+        placeholder.className = 'drop-placeholder';
+        placeholder.style.width = '4px';
+        placeholder.style.height = '30px';
+        placeholder.style.background = 'var(--primary)';
+        placeholder.style.borderRadius = '2px';
+        placeholder.style.margin = '0 4px';
+
+        if (target) {
+            const rect = target.getBoundingClientRect();
+            const midX = rect.left + rect.width / 2;
+            if (e.clientX < midX) {
+                areaGrid.insertBefore(placeholder, target);
+            } else {
+                areaGrid.insertBefore(placeholder, target.nextSibling);
+            }
+        } else {
+            areaGrid.appendChild(placeholder);
+        }
+
+        areaGrid.classList.add('drag-over');
+    });
+
+    areaGrid.addEventListener('dragleave', e => {
+        // Only remove if leaving the valid drop zone completely
+        if (!areaGrid.contains(e.relatedTarget)) {
+            areaGrid.classList.remove('drag-over');
+            const placeholder = areaGrid.querySelector('.drop-placeholder');
+            if (placeholder) placeholder.remove();
+        }
+    });
+
+    areaGrid.addEventListener('drop', e => {
+        e.preventDefault();
+        areaGrid.classList.remove('drag-over');
+
+        const placeholder = areaGrid.querySelector('.drop-placeholder');
+        let dropIndex = -1;
+        if (placeholder) {
+            // Calculate index based on placeholder position among component elements
+            const children = Array.from(areaGrid.children).filter(c => c.classList.contains('global-component') || c.classList.contains('drop-placeholder'));
+            dropIndex = children.indexOf(placeholder);
+            placeholder.remove();
+        }
+
+        // Case 1: Reordering existing component
+        const reorderId = e.dataTransfer.getData('reorder-id');
+        const sourceArea = e.dataTransfer.getData('source-area');
+
+        if (reorderId) {
+            if (sourceArea !== areaType) return; // Prevent moving between header/footer for simplicity
+
+            const targetArray = areaType === 'header' ? state.globalHeader.components : state.globalFooter.components;
+            const oldIndex = targetArray.findIndex(c => c.id === reorderId);
+
+            if (oldIndex >= 0) {
+                const [item] = targetArray.splice(oldIndex, 1);
+                // Adjust index if shifting occurred
+                if (dropIndex > oldIndex) dropIndex--;
+                if (dropIndex < 0) dropIndex = targetArray.length; // Default to end
+
+                targetArray.splice(dropIndex, 0, item);
+                renderGlobalAreas();
+            }
+            return;
+        }
+
+        // Case 2: Adding new tool
+        const type = e.dataTransfer.getData('type');
+        if (!type) return;
+
+        const typeLabels = {
+            html: 'HTML/JS',
+            button: 'Button',
+            checkbox: 'Checkbox',
+            toggle: 'Toggle',
+            input: 'Input',
+            label: 'Label',
+            select: 'Select',
+            form: 'Form',
+            checklist: 'Checklist',
+            datepicker: 'Calendar',
+            modal: 'Modal',
+            table: 'Table'
+        };
+
+        const newComp = {
+            id: 'comp-' + Date.now(),
+            type,
+            label: typeLabels[type] || type
+        };
+
+        const targetArray = areaType === 'header' ? state.globalHeader.components : state.globalFooter.components;
+        if (dropIndex >= 0 && dropIndex <= targetArray.length) {
+            targetArray.splice(dropIndex, 0, newComp);
+        } else {
+            targetArray.push(newComp);
+        }
+        renderGlobalAreas();
     });
 }
 

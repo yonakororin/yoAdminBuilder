@@ -309,7 +309,8 @@ body {
 
 .breadcrumbs {
     color: var(--text-muted);
-    font-size: 0.9rem;
+    font-size: 1.1rem;
+    font-weight: bold;
     flex: 1;
 }
 
@@ -585,6 +586,118 @@ body {
     border-color: var(--primary);
 }
 
+/* Global Header/Footer Areas */
+.global-area {
+    display: none;
+    padding: 0.5rem 1rem;
+    background: var(--bg-card);
+    border-bottom: 1px solid var(--border);
+}
+
+.global-area.active {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+    flex-wrap: wrap;
+}
+
+#global-footer.global-area {
+    border-bottom: none;
+    border-top: 1px solid var(--border);
+}
+
+.global-item {
+    flex-shrink: 0;
+}
+
+/* Global Area Editor (Builder) */
+.global-toggle {
+    display: flex;
+    gap: 8px;
+    margin-left: auto;
+}
+
+.global-toggle-btn {
+    padding: 4px 10px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background: var(--bg);
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 0.8rem;
+    transition: all 0.2s;
+}
+
+.global-toggle-btn:hover,
+.global-toggle-btn.active {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+}
+
+.global-area-editor {
+    padding: 0.5rem 1rem;
+    background: var(--bg-card);
+    border-bottom: 1px solid var(--border);
+}
+
+.global-area-editor.hidden {
+    display: none;
+}
+
+#global-footer-editor {
+    border-bottom: none;
+    border-top: 1px solid var(--border);
+}
+
+.global-area-label {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin-bottom: 0.5rem;
+}
+
+.global-area-label .hint {
+    opacity: 0.6;
+}
+
+.global-area-grid {
+    min-height: 50px;
+    border: 2px dashed var(--border);
+    border-radius: 6px;
+    padding: 8px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+}
+
+.global-area-grid.drag-over {
+    border-color: var(--primary);
+    background: rgba(var(--primary-rgb), 0.1);
+}
+
+.global-area-grid .global-component {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 6px 10px;
+    font-size: 0.85rem;
+    cursor: move;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.global-area-grid .global-component:hover {
+    border-color: var(--primary);
+}
+
+.global-area-grid .global-component .remove-btn {
+    color: var(--danger);
+    cursor: pointer;
+    margin-left: 4px;
+}
+
 /* Grid Container */
 .grid-container {
     flex: 1;
@@ -696,6 +809,7 @@ body {
 .comp-checkbox,
 .comp-toggle,
 .comp-input,
+.comp-select,
 .comp-datepicker {
     display: flex;
     flex-direction: row;
@@ -710,6 +824,7 @@ body {
 .comp-checkbox span,
 .comp-toggle span,
 .comp-input span,
+.comp-select span,
 .comp-datepicker span {
     display: inline-flex;
     align-items: center;
@@ -724,6 +839,7 @@ body {
 }
 
 .comp-input input,
+.comp-select select,
 .comp-datepicker input {
     flex: 1;
     padding: 0.3rem 0.5rem;
@@ -733,6 +849,10 @@ body {
     color: var(--text);
     font-size: 0.75rem;
     margin-bottom: 0;
+}
+
+.comp-select select {
+    cursor: pointer;
 }
 
 .comp-button {

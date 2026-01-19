@@ -73,6 +73,7 @@
                             <div class="tool" data-type="toggle" draggable="true"><i class="fa-solid fa-toggle-on"></i> Toggle</div>
                             <div class="tool" data-type="checklist" draggable="true"><i class="fa-solid fa-list-check"></i> Checklist</div>
                             <div class="tool" data-type="input" draggable="true"><i class="fa-solid fa-keyboard"></i> Input</div>
+                            <div class="tool" data-type="select" draggable="true"><i class="fa-solid fa-caret-down"></i> Select</div>
                             <div class="tool" data-type="datepicker" draggable="true"><i class="fa-solid fa-calendar"></i> Calendar</div>
                             <div class="tool" data-type="modal" draggable="true"><i class="fa-regular fa-window-restore"></i> Modal</div>
                             <div class="tool" data-type="table" draggable="true"><i class="fa-solid fa-table"></i> Table</div>
@@ -115,8 +116,20 @@
 
             <!-- Workspace -->
             <div id="workspace" class="workspace hidden">
+                <div id="global-header-editor" class="global-area-editor hidden">
+                    <div class="global-area-label">
+                        Global Header <span class="hint">(Drag components here)</span>
+                        <button id="delete-global-header" class="btn-xs btn-danger" style="margin-left:auto"><i class="fa-solid fa-trash"></i> Delete</button>
+                    </div>
+                    <div id="global-header-grid" class="global-area-grid"></div>
+                </div>
                 <div class="tabs-bar">
                     <div id="tabs" class="tabs"></div>
+                    <div class="global-toggle">
+                        <button id="toggle-global-header" class="global-toggle-btn" title="Add/Edit Global Header">
+                            <i class="fa-solid fa-plus"></i> Header
+                        </button>
+                    </div>
                 </div>
                 <div id="grid-container" class="grid-container">
                     <div id="grid" class="grid"></div>

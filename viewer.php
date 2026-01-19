@@ -70,12 +70,14 @@
             </header>
             <div id="empty-state" class="empty-state"><p>Select a submenu to view.</p></div>
             <div id="workspace" class="workspace hidden">
+                <div id="global-header" class="global-area"></div>
                 <div class="tabs-bar">
                     <div id="tabs" class="tabs"></div>
                 </div>
                 <div class="grid-container">
                     <div id="grid" class="grid"></div>
                 </div>
+                <div id="global-footer" class="global-area"></div>
             </div>
         </main>
     </div>
@@ -560,10 +562,10 @@
                     const data = await res.json();
                     // Support both old format (array) and new format (object with menus/brandTitle)
                     if (Array.isArray(data)) {
-                        state.config = data;
+                        state.config = { menus: data };
                         state.brandTitle = 'yoAdmin';
                     } else {
-                        state.config = data.menus || [];
+                        state.config = data;
                         state.brandTitle = data.brandTitle || 'yoAdmin';
                     }
                 }
@@ -574,11 +576,12 @@
             if (brandEl) brandEl.innerHTML = `<i class="fa-solid fa-shapes"></i> ${state.brandTitle}`;
             
             renderSidebar();
+            renderGlobalAreas();
         }
 
         function renderSidebar() {
             const el = document.getElementById('menu-tree');
-            el.innerHTML = state.config.map(m => {
+            el.innerHTML = (state.config.menus || []).map(m => {
                 const hasDirectTabs = m.tabs && m.tabs.length > 0 && (!m.submenus || m.submenus.length === 0);
                 const isSelected = state.selectedMenuId === m.id && !state.selectedSubmenuId;
                 const isExpanded = state.selectedMenuId === m.id;
@@ -615,7 +618,7 @@
                 item.onclick = () => {
                     state.selectedMenuId = item.dataset.menu;
                     state.selectedSubmenuId = null;
-                    const menu = state.config.find(m => m.id === state.selectedMenuId);
+                    const menu = (state.config.menus || []).find(m => m.id === state.selectedMenuId);
                     if (menu?.tabs?.length) state.activeTabId = menu.tabs[0].id;
                     renderSidebar();
                     showWorkspace();
@@ -666,13 +669,13 @@
         }
 
         function getSubmenu() {
-            const m = state.config.find(x => x.id === state.selectedMenuId);
+            const m = (state.config.menus || []).find(x => x.id === state.selectedMenuId);
             if (!state.selectedSubmenuId) return null;
             return m?.submenus?.find(x => x.id === state.selectedSubmenuId);
         }
         
         function getTabs() {
-            const menu = state.config.find(m => m.id === state.selectedMenuId);
+            const menu = (state.config.menus || []).find(m => m.id === state.selectedMenuId);
             if (!state.selectedSubmenuId && menu?.tabs) return menu.tabs;
             const sub = getSubmenu();
             return sub?.tabs || [];
@@ -681,7 +684,7 @@
         function showWorkspace() {
             document.getElementById('empty-state').classList.add('hidden');
             document.getElementById('workspace').classList.remove('hidden');
-            const m = state.config.find(x => x.id === state.selectedMenuId);
+            const m = (state.config.menus || []).find(x => x.id === state.selectedMenuId);
             const s = getSubmenu();
             document.getElementById('breadcrumbs').textContent = s ? `${m?.title} > ${s?.title}` : m?.title || '';
             renderTabs();
@@ -715,6 +718,45 @@
             // Load HTML files and execute scripts
             loadHtmlFiles(g);
             executeScripts(g);
+        }
+        
+        // Render global header/footer areas
+        function renderGlobalAreas() {
+            const headerContainer = document.getElementById('global-header');
+            const footerContainer = document.getElementById('global-footer');
+            
+            const globalHeader = state.config.globalHeader;
+            const globalFooter = state.config.globalFooter;
+            
+            // Render header
+            if (globalHeader && globalHeader.components && globalHeader.components.length > 0) {
+                headerContainer.innerHTML = globalHeader.components.map(c => {
+                    const customId = c.customId ? `id="${c.customId}"` : '';
+                    const customClass = c.customClass || '';
+                    return `<div class="global-item ${customClass}" ${customId}>${getComponentContent(c)}</div>`;
+                }).join('');
+                headerContainer.classList.add('active');
+                loadHtmlFiles(headerContainer);
+                executeScripts(headerContainer);
+            } else {
+                headerContainer.innerHTML = '';
+                headerContainer.classList.remove('active');
+            }
+            
+            // Render footer
+            if (globalFooter && globalFooter.components && globalFooter.components.length > 0) {
+                footerContainer.innerHTML = globalFooter.components.map(c => {
+                    const customId = c.customId ? `id="${c.customId}"` : '';
+                    const customClass = c.customClass || '';
+                    return `<div class="global-item ${customClass}" ${customId}>${getComponentContent(c)}</div>`;
+                }).join('');
+                footerContainer.classList.add('active');
+                loadHtmlFiles(footerContainer);
+                executeScripts(footerContainer);
+            } else {
+                footerContainer.innerHTML = '';
+                footerContainer.classList.remove('active');
+            }
         }
         
         async function loadHtmlFiles(container) {
@@ -777,6 +819,14 @@
                     return pos === 'right'
                         ? `<label class="comp-input ${flexClass}"><input type="text" placeholder="..."><span>${label}</span></label>`
                         : `<label class="comp-input ${flexClass}"><span>${label}</span><input type="text" placeholder="..."></label>`;
+                case 'select': {
+                    const options = comp.options || ['Option 1', 'Option 2', 'Option 3'];
+                    const defaultVal = comp.defaultValue || '';
+                    const optionsHtml = options.map(o => `<option${o === defaultVal ? ' selected' : ''}>${o}</option>`).join('');
+                    return pos === 'right'
+                        ? `<label class="comp-select ${flexClass}"><select>${optionsHtml}</select><span>${label}</span></label>`
+                        : `<label class="comp-select ${flexClass}"><span>${label}</span><select>${optionsHtml}</select></label>`;
+                }
                 case 'button':
                     const btnStyle = comp.buttonStyle || 'normal'; 
                     const disabledAttr = btnStyle === 'disabled' ? 'disabled' : '';
