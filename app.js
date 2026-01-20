@@ -418,8 +418,11 @@ function createGridItem(comp) {
 
 function getComponentContent(comp) {
     const label = comp.label || 'Label';
-    const pos = comp.labelPosition || 'left'; // 'left' or 'right'
-    const flexClass = pos === 'right' ? 'label-right' : 'label-left';
+    const pos = comp.labelPosition || 'left'; // 'left' or 'right' or 'top' or 'bottom'
+    let flexClass = 'label-left';
+    if (pos === 'right') flexClass = 'label-right';
+    if (pos === 'top') flexClass = 'label-top';
+    if (pos === 'bottom') flexClass = 'label-bottom';
 
     switch (comp.type) {
         case 'checkbox':
@@ -846,13 +849,15 @@ function openComponentSettings(comp) {
     }
 
     // Label position for labeled components
-    if (['checkbox', 'toggle', 'input', 'datepicker'].includes(comp.type)) {
+    if (['checkbox', 'toggle', 'input', 'datepicker', 'select'].includes(comp.type)) {
         html += `
                 <div class="settings-group">
                 <label>Label Position:</label>
                 <select id="comp-label-position">
-                    <option value="left" ${comp.labelPosition === 'left' ? 'selected' : ''}>Left</option>
+                    <option value="left" ${(!comp.labelPosition || comp.labelPosition === 'left') ? 'selected' : ''}>Left</option>
                     <option value="right" ${comp.labelPosition === 'right' ? 'selected' : ''}>Right</option>
+                    <option value="top" ${comp.labelPosition === 'top' ? 'selected' : ''}>Top</option>
+                    <option value="bottom" ${comp.labelPosition === 'bottom' ? 'selected' : ''}>Bottom</option>
                 </select>
             </div>
                 `;
@@ -1903,23 +1908,36 @@ async function openSaveAsModal() {
 // SAVE OPTIONS MODAL
 // ============================================================
 async function openSaveOptionsModal() {
+    // Ensure targetFile has a value
+    if (!state.targetFile) {
+        state.targetFile = localStorage.getItem('yoAdminTargetFile') || fileInputEl?.value || 'admin_config.json';
+        console.warn('[Save] targetFile was empty, recovered from storage:', state.targetFile);
+    }
+
+    console.log('[Save] Opening save options, targetFile:', state.targetFile);
+
     // Extract directory and filename from current target
     const lastSlash = state.targetFile.lastIndexOf('/');
     const initialDir = lastSlash > -1 ? state.targetFile.substring(0, lastSlash) : '';
     const initialFilename = lastSlash > -1 ? state.targetFile.substring(lastSlash + 1) : state.targetFile;
 
     // Fetch current directory path to display context
-    let currentDir = 'Loading...';
+    let currentDir = initialDir || '(Current Directory)';
     try {
         const res = await fetch(`api.php?action=browse&path=${encodeURIComponent(initialDir)}`);
-        const data = await res.json();
-        currentDir = data.current_path;
-        // Normalize slashes for display
-        if (!currentDir.endsWith('/') && !currentDir.endsWith('\\')) {
-            currentDir += '/';
+        if (res.ok) {
+            const data = await res.json();
+            if (data.current_path) {
+                currentDir = data.current_path;
+                // Normalize slashes for display
+                if (!currentDir.endsWith('/') && !currentDir.endsWith('\\')) {
+                    currentDir += '/';
+                }
+            }
         }
     } catch (e) {
-        currentDir = '';
+        console.error('[Save] Failed to fetch directory path:', e);
+        // Keep the fallback value
     }
 
     openModal('Save Dashboard', `

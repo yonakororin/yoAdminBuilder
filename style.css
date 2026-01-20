@@ -798,204 +798,32 @@ body {
     border-radius: 6px 6px 0 0;
 }
 
+.item-header i {
+    cursor: pointer;
+    padding: 4px;
+}
+
 .grid-item:hover .item-header {
     opacity: 1;
-    /* Show on hover */
-}
-
-.item-edit,
-.item-delete {
-    opacity: 0;
-    margin-left: 4px;
-    cursor: pointer;
-    transition: opacity 0.2s, color 0.2s;
-    padding: 4px 6px;
-    font-size: 11px;
-    border-radius: 3px;
-}
-
-.item-edit:first-of-type {
-    margin-left: auto;
-}
-
-.item-header:hover .item-edit,
-.item-header:hover .item-delete {
-    opacity: 1;
-}
-
-.item-edit:hover {
-    color: #fbbf24;
-}
-
-.item-delete:hover {
-    color: #ef4444;
 }
 
 .item-content {
     flex: 1;
-    padding: 0.5rem;
-    font-size: 0.8rem;
+    padding: 8px;
     overflow: hidden;
     display: flex;
-    align-items: flex-start;
-    justify-content: flex-start;
+    flex-direction: column;
 }
 
-/* Component Styles */
-.comp-checkbox,
-.comp-toggle,
-.comp-input,
-.comp-select,
-.comp-datepicker {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: flex-start;
-    gap: 0.5rem;
-    width: 100%;
-    margin: 0;
-    /* Vertical center in parent */
-}
-
-.comp-checkbox span,
-.comp-toggle span,
-.comp-input span,
-.comp-select span,
-.comp-datepicker span {
-    display: inline-flex;
-    align-items: center;
-    white-space: nowrap;
-    line-height: 1;
-}
-
-.comp-checkbox input,
-.comp-input input,
-.comp-datepicker input {
-    accent-color: var(--primary);
-}
-
-.comp-input input,
-.comp-select select,
-.comp-datepicker input {
-    flex: 1;
-    padding: 0.3rem 0.5rem;
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    color: var(--text);
-    font-size: 0.75rem;
-    margin-bottom: 0;
-}
-
-.comp-select select {
-    cursor: pointer;
-}
-
-.comp-button {
-    padding: 0.4rem 1rem;
-    background: var(--primary);
-    border: none;
-    border-radius: 4px;
-    color: white;
-    cursor: pointer;
-    font-size: 0.8rem;
-}
-
-.comp-button:hover {
-    background: #2563eb;
-}
-
-.comp-button.btn-info {
-    background: #0ea5e9;
-    /* Sky 500 */
-}
-
-.comp-button.btn-info:hover {
-    background: #0284c7;
-}
-
-.comp-button.btn-danger {
-    background: #ef4444;
-    /* Red 500 */
-}
-
-.comp-button.btn-danger:hover {
-    background: #dc2626;
-}
-
-.comp-button.btn-warning {
-    background: #f59e0b;
-    /* Amber 500 */
-    color: black;
-}
-
-.comp-button.btn-warning:hover {
-    background: #d97706;
-}
-
-.comp-button.btn-disabled,
-.comp-button:disabled {
-    background: var(--bg-hover);
-    color: var(--text-muted);
-    cursor: not-allowed;
-    border: 1px solid var(--border);
-}
-
-/* Toggle Switch */
-.comp-toggle {
-    position: relative;
-}
-
-.toggle-input {
-    display: none;
-}
-
-.toggle-slider {
-    width: 36px;
-    height: 20px;
-    background: var(--border);
-    border-radius: 10px;
-    position: relative;
-    cursor: pointer;
-    transition: background 0.2s;
-}
-
-.toggle-slider::after {
-    content: '';
-    position: absolute;
-    left: 2px;
-    top: 2px;
-    width: 16px;
-    height: 16px;
-    background: white;
-    border-radius: 50%;
-    transition: transform 0.2s;
-}
-
-.toggle-input:checked+.toggle-slider {
-    background: var(--primary);
-}
-
-.toggle-input:checked+.toggle-slider::after {
-    transform: translateX(16px);
-}
-
-.comp-html,
-.comp-form {
-    width: 100%;
-    height: 100%;
-    color: var(--text);
-    align-self: flex-start;
-    text-align: left;
-}
-
+/* Resize Handle */
 .resize-handle {
     position: absolute;
     right: 0;
     bottom: 0;
-    width: 14px;
-    height: 14px;
-    cursor: nwse-resize;
+    width: 12px;
+    height: 12px;
+    cursor: se-resize;
+    z-index: 5;
 }
 
 .resize-handle::after {
@@ -1163,6 +991,112 @@ body {
 
 .btn-primary:hover {
     background: #2563eb;
+}
+
+.btn-info {
+    background: #0ea5e9;
+    /* Sky 500 */
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.btn-info:hover {
+    background: #0284c7;
+}
+
+.btn-success {
+    background: #22c55e;
+    /* Green 500 */
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.btn-success:hover {
+    background: #16a34a;
+}
+
+.btn-danger {
+    background: #ef4444;
+    /* Red 500 */
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.btn-danger:hover {
+    background: #dc2626;
+}
+
+.btn-warning {
+    background: #f59e0b;
+    /* Amber 500 */
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.btn-warning:hover {
+    background: #d97706;
+}
+
+.btn-disabled {
+    background: #475569;
+    /* Slate 600 */
+    color: #94a3b8;
+    border: 1px solid var(--border);
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.comp-button {
+    background: var(--bg-hover);
+    /* Default normal style */
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    transition: all 0.2s;
+}
+
+.comp-button:hover {
+    background: var(--bg-card);
+    border-color: var(--primary);
+}
+
+/* Overrides for colored buttons to remove borders/bg from default comp-button */
+.comp-button.btn-primary,
+.comp-button.btn-info,
+.comp-button.btn-danger,
+.comp-button.btn-warning,
+.comp-button.btn-success {
+    border: none;
+}
+
+.comp-button.btn-primary:hover,
+.comp-button.btn-info:hover,
+.comp-button.btn-danger:hover,
+.comp-button.btn-warning:hover,
+.comp-button.btn-success:hover {
+    border: none;
+    opacity: 0.9;
 }
 
 button {
@@ -1546,4 +1480,83 @@ label {
 .comp-table-pagination .page-info {
     font-size: 0.85rem;
     color: var(--text-muted);
+}
+
+/* Label Positioning Support */
+.comp-input,
+.comp-select,
+.comp-checkbox,
+.comp-toggle,
+.comp-datepicker {
+    display: flex !important;
+    gap: 8px;
+    height: 100%;
+    width: 100%;
+}
+
+.label-top {
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+}
+
+.label-top span {
+    margin-bottom: 0;
+    line-height: 1.2;
+}
+
+.label-top input,
+.label-top select,
+.label-top .toggle-switch {
+    width: 100%;
+    margin-bottom: 0;
+}
+
+.label-bottom {
+    flex-direction: column-reverse;
+    align-items: flex-start;
+    justify-content: center;
+}
+
+.label-bottom span {
+    margin-top: 1px;
+    line-height: 1.2;
+}
+
+.label-bottom input,
+.label-bottom select,
+.label-bottom .toggle-switch {
+    width: 100%;
+    margin-bottom: 0;
+}
+
+.label-left {
+    flex-direction: row;
+    align-items: center;
+}
+
+.label-left span {
+    white-space: nowrap;
+}
+
+.label-left input,
+.label-left select {
+    flex: 1;
+    margin-bottom: 0;
+}
+
+.label-right {
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-end;
+}
+
+.label-right span {
+    white-space: nowrap;
+}
+
+.label-right input,
+.label-right select {
+    flex: 1;
+    margin-bottom: 0;
 }

@@ -752,7 +752,7 @@
                 const customId = (c.customId && !hasInnerIdComponent) ? `id="${c.customId}"` : '';
                 const customClass = c.customClass ? c.customClass : '';
                 return `
-                <div class="grid-item ${customClass}" ${customId} style="grid-column:${(c.x||0)+1}/span ${c.w||4};grid-row:${(c.y||0)+1}/span ${c.h||2}">
+                <div class="grid-item ${customClass}" data-id="${c.id}" ${customId} style="grid-column:${(c.x||0)+1}/span ${c.w||4};grid-row:${(c.y||0)+1}/span ${c.h||2}">
                     <div class="item-content">${getComponentContent(c)}</div>
                 </div>
             `}).join('');
@@ -846,7 +846,10 @@
         function getComponentContent(comp) {
             const label = comp.label || 'Label';
             const pos = comp.labelPosition || 'left';
-            const flexClass = pos === 'right' ? 'label-right' : 'label-left';
+            let flexClass = 'label-left';
+            if (pos === 'right') flexClass = 'label-right';
+            if (pos === 'top') flexClass = 'label-top';
+            if (pos === 'bottom') flexClass = 'label-bottom';
             
             switch(comp.type) {
                 case 'checkbox':
@@ -1007,25 +1010,32 @@
                 let labels = [];
                 
                 // Determine column indices if using array-of-arrays
-                const valIdx = columns.indexOf(valCol);
-                const labelIdx = columns.indexOf(labelCol);
+                // Also get columnKeys for data key mapping
+                const columnKeys = yoTable._getState(tableId)?.columnKeys || [];
+                
+                // Map display column name to data key
+                const valColIdx = columns.indexOf(valCol);
+                const valDataKey = (columnKeys.length > valColIdx && columnKeys[valColIdx]) ? columnKeys[valColIdx] : valCol;
+                
+                const labelColIdx = columns.indexOf(labelCol);
+                const labelDataKey = (columnKeys.length > labelColIdx && columnKeys[labelColIdx]) ? columnKeys[labelColIdx] : labelCol;
                 
                 data.forEach((row, i) => {
                     // Extract value
                     let v = null;
                     if (Array.isArray(row)) {
-                        if (valIdx >= 0) v = row[valIdx];
+                        if (valColIdx >= 0) v = row[valColIdx];
                     } else {
-                        v = row[valCol];
+                        v = row[valDataKey];
                     }
                     
                     // Extract label from specified column
                     let l = null;
                     if (labelCol && labelCol.trim() !== '') {
                         if (Array.isArray(row)) {
-                            if (labelIdx >= 0) l = row[labelIdx];
+                            if (labelColIdx >= 0) l = row[labelColIdx];
                         } else {
-                            l = row[labelCol];
+                            l = row[labelDataKey];
                         }
                     }
                     // Fallback to row number if no label column or value is empty
