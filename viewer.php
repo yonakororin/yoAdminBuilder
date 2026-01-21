@@ -1,4 +1,26 @@
-<?php require_once 'auth.php'; ?>
+<?php 
+require_once 'auth.php'; 
+
+// Load Admin Config for Theme
+$config_param = isset($_GET['config']) ? $_GET['config'] : 'admin_config.json';
+$config_path = $config_param;
+if (!preg_match('/^(\/|[a-zA-Z]:)/', $config_param)) {
+    $config_path = __DIR__ . '/' . $config_param;
+}
+$config_path = realpath($config_path) ?: $config_path;
+
+$admin_config = [];
+if (file_exists($config_path)) {
+    $decoded = json_decode(file_get_contents($config_path), true);
+    if (is_array($decoded)) {
+        $admin_config = $decoded;
+        // Support legacy array format (menus array) vs object format
+        if (isset($admin_config[0])) { 
+            $admin_config = ['menus' => $admin_config]; // normalization
+        }
+    }
+}
+?>
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -10,6 +32,14 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="../shared/theme.css">
     <link rel="stylesheet" href="style.css">
+    <script>
+        window.mngConfig = <?= json_encode([
+            'target_env' => $admin_config['target_env'] ?? (isset($_GET['env']) ? str_replace('web-', '', $_GET['env']) : 'dev'),
+            'base_color' => $admin_config['base_color'] ?? null,
+            'debug_path' => $config_path
+        ]) ?>;
+    </script>
+    <script src="../shared/theme.js"></script>
     <style>
         /* Viewer overrides - hide edit controls */
         .btn-add, .add-sub, .icon-btn, .toolbox, .item-header, .resize-handle { display: none !important; }
@@ -47,20 +77,7 @@
                         <i class="fa-solid fa-chevron-down" style="font-size:0.6rem;"></i>
                     </button>
                     <div class="user-menu-dropdown" id="user-menu-dropdown">
-                        <div class="user-menu-item theme-select">
-                            <i class="fa-solid fa-palette"></i>
-                            <span>Theme:</span>
-                            <select id="theme-select" title="Theme">
-                                <option value="dark">🌙 Dark</option>
-                                <option value="light">☀️ Light</option>
-                                <option value="midnight">🔮 Midnight</option>
-                                <option value="ocean">🌊 Ocean</option>
-                                <option value="forest">🌲 Forest</option>
-                                <option value="sunset">🌅 Sunset</option>
-                                <option value="mono">⬜ Mono</option>
-                                <option value="rose">🌸 Rose</option>
-                            </select>
-                        </div>
+
                         <a href="logout.php" class="user-menu-item">
                             <i class="fa-solid fa-sign-out-alt"></i>
                             <span>Logout</span>
@@ -599,7 +616,8 @@
         async function init() {
             const file = new URLSearchParams(location.search).get('config') || localStorage.getItem('yoAdminTargetFile') || 'admin_config.json';
             try {
-                const res = await fetch(`api.php?file=${file}`);
+                // Use encodeURIComponent to handle spaces/special characters
+                const res = await fetch(`api.php?file=${encodeURIComponent(file)}`);
                 if (res.ok) {
                     const data = await res.json();
                     // Support both old format (array) and new format (object with menus/brandTitle)
