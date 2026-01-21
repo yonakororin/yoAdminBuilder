@@ -39,11 +39,12 @@ body {
     width: 220px;
     min-width: 220px;
     max-width: 220px;
-    background: var(--bg-card);
+    background: var(--theme-sidebar-bg, var(--bg-card));
     border-right: 1px solid var(--border);
     display: flex;
     flex-direction: column;
     flex-shrink: 0;
+    color: var(--theme-sidebar-text, var(--text));
 }
 
 .brand {
@@ -54,6 +55,8 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    background: var(--theme-brand-bg, var(--bg-card));
+    color: var(--theme-brand-text, var(--text));
 }
 
 .btn-add {
@@ -134,7 +137,7 @@ body {
     padding: 0.5rem;
     cursor: pointer;
     border-radius: 4px;
-    color: var(--text-muted);
+    color: var(--theme-sidebar-text, var(--text-muted));
 }
 
 .menu-header:hover {
@@ -184,8 +187,9 @@ body {
     padding: 0.4rem 0.5rem;
     cursor: pointer;
     font-size: 0.9rem;
-    color: var(--text-muted);
+    color: var(--theme-sidebar-text, var(--text-muted));
     border-radius: 4px;
+    opacity: 0.8;
 }
 
 /* Modal Component */
