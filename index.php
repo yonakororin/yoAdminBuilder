@@ -237,6 +237,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create_new'])) {
                     </select>
                 </div>
                 <span><i class="fa-solid fa-user-circle"></i> <?= htmlspecialchars($_SESSION['user']) ?></span>
+                <a href="../yoSSO/change_password.php" style="margin-right: 15px;"><i class="fa-solid fa-key"></i> Pass</a>
                 <a href="logout.php"><i class="fa-solid fa-sign-out-alt"></i> Logout</a>
             </div>
         </div>

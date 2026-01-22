@@ -78,6 +78,10 @@ if (file_exists($config_path)) {
                     </button>
                     <div class="user-menu-dropdown" id="user-menu-dropdown">
 
+                        <a href="../yoSSO/change_password.php" class="user-menu-item">
+                            <i class="fa-solid fa-key"></i>
+                            <span>Change Password</span>
+                        </a>
                         <a href="logout.php" class="user-menu-item">
                             <i class="fa-solid fa-sign-out-alt"></i>
                             <span>Logout</span>
