@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/../shared/session_config.php';
 session_start();
 
 // Configuration
@@ -18,7 +19,8 @@ $base_url = get_current_base_url();
 // 1. Check if already logged in (unified session key 'user')
 if (!isset($_SESSION['user'])) {
     // Redirect to SSO
-    $redirect_uri = urlencode("$base_url/callback.php");
+    $callback_url = "$base_url/callback.php?next=" . urlencode($_SERVER['REQUEST_URI']);
+    $redirect_uri = urlencode($callback_url);
     header("Location: $sso_url?redirect_uri=$redirect_uri");
     exit;
 }
@@ -29,7 +31,9 @@ if (isset($_SESSION['login_time'])) {
     if ((time() - $_SESSION['login_time']) > $timeout_duration) {
         // Session expired
         session_destroy();
-        $redirect_uri = urlencode("$base_url/callback.php");
+        session_destroy();
+        $callback_url = "$base_url/callback.php?next=" . urlencode($_SERVER['REQUEST_URI']);
+        $redirect_uri = urlencode($callback_url);
         header("Location: $sso_url?redirect_uri=$redirect_uri");
         exit;
     }

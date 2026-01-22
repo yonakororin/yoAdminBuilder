@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/../shared/session_config.php';
 session_start();
 
 $sso_path = __DIR__ . '/../yoSSO';
@@ -27,8 +28,9 @@ if (isset($codes[$code])) {
         unset($codes[$code]);
         file_put_contents($codes_file, json_encode($codes));
         
-        // Redirect to builder (default page)
-        header("Location: builder.php");
+        // Redirect to original page or builder
+        $next = $_GET['next'] ?? 'builder.php';
+        header("Location: " . $next);
         exit;
     } else {
         die("Login failed: Code expired.");
