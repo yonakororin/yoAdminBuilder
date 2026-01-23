@@ -2,6 +2,15 @@
 require_once __DIR__ . '/../shared/session_config.php';
 session_start();
 
+if (!function_exists('str_ends_with')) {
+    function str_ends_with($haystack, $needle) {
+        if ($needle === '' || $needle === null) return true;
+        if ($haystack === '' || $haystack === null) return false;
+        $length = strlen($needle);
+        return $length === 0 || substr($haystack, -$length) === $needle;
+    }
+}
+
 // Configuration
 $sso_url = '../yoSSO/';
 
