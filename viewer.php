@@ -1,6 +1,15 @@
 <?php 
 require_once 'auth.php'; 
 
+// Include centralized path configuration
+// Use local config if exists, otherwise use default relative path
+$_paths_config = file_exists(__DIR__ . '/mng_paths_local.php') 
+    ? include(__DIR__ . '/mng_paths_local.php') 
+    : ['paths_php' => dirname(__DIR__) . '/shared/paths.php'];
+require_once $_paths_config['paths_php'];
+$paths = MngPaths::getInstance();
+unset($_paths_config);
+
 // Load Admin Config for Theme
 $config_param = isset($_GET['config']) ? $_GET['config'] : 'admin_config.json';
 $config_path = $config_param;
@@ -30,8 +39,9 @@ if (file_exists($config_path)) {
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link rel="stylesheet" href="../shared/theme.css">
+    <link rel="stylesheet" href="<?= $paths->getUrl('shared') ?>/theme.css">
     <link rel="stylesheet" href="style.css">
+    <?= mng_js_paths() ?>
     <script>
         window.mngConfig = <?= json_encode([
             'target_env' => $admin_config['target_env'] ?? (isset($_GET['env']) ? str_replace('web-', '', $_GET['env']) : 'dev'),
@@ -39,7 +49,7 @@ if (file_exists($config_path)) {
             'debug_path' => $config_path
         ]) ?>;
     </script>
-    <script src="../shared/theme.js"></script>
+    <script src="<?= $paths->getUrl('shared') ?>/theme.js"></script>
     <style>
         /* Viewer overrides - hide edit controls */
         .btn-add, .add-sub, .icon-btn, .toolbox, .item-header, .resize-handle { display: none !important; }
@@ -53,7 +63,7 @@ if (file_exists($config_path)) {
             border: none;
         }
         .grid-item:hover { border-color: transparent; box-shadow: none; }
-        .item-content { padding: 0; }
+        .item-content { padding: 0; height: 100%; overflow: hidden; }
         .grid { background: none !important; border: none !important; }
         .grid-container { background: var(--bg) !important; }
     </style>

@@ -738,11 +738,9 @@ body {
 /* Grid Container */
 .grid-container {
     flex: 1;
-    overflow-y: auto;
-    overflow-x: hidden;
+    overflow: hidden;
     padding: 1rem;
     background: #131c2e;
-    max-height: calc(100vh - 180px);
 }
 
 /* Grid - 12 columns */
@@ -768,7 +766,17 @@ body {
     position: relative;
     cursor: default;
     transition: box-shadow 0.15s, border-color 0.15s;
-    overflow: auto;
+    overflow: hidden;
+}
+
+/* HTML Component - fills grid-item and enables scrolling */
+.comp-html,
+.comp-html-file {
+    height: 100%;
+    width: 100%;
+    overflow-y: auto;
+    overflow-x: hidden;
+    box-sizing: border-box;
 }
 
 .grid-item:hover {
