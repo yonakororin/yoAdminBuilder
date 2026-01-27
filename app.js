@@ -1745,7 +1745,7 @@ async function openSelectFileModal(onSelect, extensions = ['json'], title = 'Bro
     async function loadPath(path = '') {
         try {
             const extsParam = extensions.join(',');
-            const res = await fetch(`api.php ? action = browse & path=${encodeURIComponent(path)}& exts=${extsParam} `);
+            const res = await fetch(`api.php?action=browse&path=${encodeURIComponent(path)}&exts=${extsParam}`);
             const data = await res.json();
 
             currentPath = data.current_path;
@@ -1841,7 +1841,7 @@ async function openSaveAsModal() {
 
     async function loadPath(path = '') {
         try {
-            const res = await fetch(`api.php ? action = browse & path=${encodeURIComponent(path)} `);
+            const res = await fetch(`api.php?action=browse&path=${encodeURIComponent(path)}`);
             const data = await res.json();
             currentPath = data.current_path;
             pathEl.textContent = currentPath;
