@@ -29,6 +29,10 @@ if (file_exists($config_path)) {
         }
     }
 }
+
+// Configurable back button URL (defaults to yoAdminPortal)
+$back_url = $admin_config['back_url'] ?? '../yoAdminPortal/viewer.php';
+$back_label = $admin_config['back_label'] ?? 'ポータルに戻る';
 ?>
 <!DOCTYPE html>
 <html lang="ja">
@@ -80,6 +84,10 @@ if (file_exists($config_path)) {
             <header class="header">
                 <div id="breadcrumbs" class="breadcrumbs">Select a submenu</div>
                 <div class="header-right">
+                    <a href="<?= htmlspecialchars($back_url) ?>" class="back-btn" title="<?= htmlspecialchars($back_label) ?>">
+                        <i class="fa-solid fa-arrow-left"></i>
+                        <span><?= htmlspecialchars($back_label) ?></span>
+                    </a>
                     <div class="user-menu">
                     <button class="user-menu-btn" id="user-menu-btn">
                         <i class="fa-solid fa-user-circle"></i>

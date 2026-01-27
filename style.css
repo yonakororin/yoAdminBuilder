@@ -1572,3 +1572,33 @@ label {
     flex: 1;
     margin-bottom: 0;
 }
+
+/* Back Button */
+.back-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background: var(--bg-hover);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    text-decoration: none;
+    font-size: 0.85rem;
+    transition: all 0.2s;
+    margin-right: 10px;
+}
+
+.back-btn:hover {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: white;
+}
+
+.back-btn i {
+    font-size: 0.85rem;
+}
+
+.back-btn span {
+    white-space: nowrap;
+}

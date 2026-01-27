@@ -1,4 +1,11 @@
-<?php require_once 'auth.php'; ?>
+<?php 
+require_once 'auth.php'; 
+
+// Configurable back button URL (defaults to yoAdminPortal)
+// Can be overridden via GET parameter or config
+$back_url = $_GET['back_url'] ?? '../yoAdminPortal/viewer.php';
+$back_label = $_GET['back_label'] ?? 'ポータルに戻る';
+?>
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -81,6 +88,10 @@
                             <div class="tool" data-type="table" draggable="true"><i class="fa-solid fa-table"></i> Table</div>
                         </div>
                     </div>
+                    <a href="<?= htmlspecialchars($back_url) ?>" class="back-btn" title="<?= htmlspecialchars($back_label) ?>">
+                        <i class="fa-solid fa-arrow-left"></i>
+                        <span><?= htmlspecialchars($back_label) ?></span>
+                    </a>
                     <div class="user-menu">
                         <button class="user-menu-btn" id="user-menu-btn">
                             <i class="fa-solid fa-user-circle"></i>
