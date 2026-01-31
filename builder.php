@@ -1,6 +1,10 @@
 <?php 
 require_once 'auth.php'; 
 
+// 権限チェック（権限がない場合は403エラー）
+require_once __DIR__ . '/../shared/permission_check.php';
+check_page_permission();
+
 // Configurable back button URL (defaults to yoAdminPortal)
 // Can be overridden via GET parameter or config
 $back_url = $_GET['back_url'] ?? '../yoAdminPortal/viewer.php';

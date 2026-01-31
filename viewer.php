@@ -1,6 +1,10 @@
 <?php 
 require_once 'auth.php'; 
 
+// 権限チェック（権限がない場合は403エラー）
+require_once __DIR__ . '/../shared/permission_check.php';
+check_page_permission();
+
 // Include centralized path configuration
 // Use local config if exists, otherwise use default relative path
 $_paths_config = file_exists(__DIR__ . '/mng_paths_local.php') 
