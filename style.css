@@ -1095,11 +1095,33 @@ body {
 }
 
 /* Overrides for colored buttons to remove borders/bg from default comp-button */
-.comp-button.btn-primary,
-.comp-button.btn-info,
-.comp-button.btn-danger,
-.comp-button.btn-warning,
+.comp-button.btn-primary {
+    background: #3b82f6;
+    color: white;
+    border: none;
+}
+
+.comp-button.btn-info {
+    background: #0ea5e9;
+    color: white;
+    border: none;
+}
+
+.comp-button.btn-danger {
+    background: #ef4444;
+    color: white;
+    border: none;
+}
+
+.comp-button.btn-warning {
+    background: #f59e0b;
+    color: white;
+    border: none;
+}
+
 .comp-button.btn-success {
+    background: #22c55e;
+    color: white;
     border: none;
 }
 
