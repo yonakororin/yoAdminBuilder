@@ -83,6 +83,19 @@ if (isset($_GET['action']) && $_GET['action'] === 'readfile') {
 // Google Spreadsheet export action
 if (isset($_GET['action']) && $_GET['action'] === 'exportToGoogleSheet') {
     header('Content-Type: application/json');
+
+    // Permission Check
+    global $permissions;
+    if (!isset($permissions)) $permissions = ['*']; // Fallback if auth.php logic fails
+    
+    // Allow if user has '*' (admin) OR specific 'export_sheet' permission
+    $is_allowed = in_array('*', $permissions) || in_array('export_sheet', $permissions);
+    
+    if (!$is_allowed) {
+        http_response_code(403);
+        echo json_encode(['success' => false, 'error' => 'Permission denied: export_sheet permission required']);
+        exit;
+    }
     
     $input = json_decode(file_get_contents('php://input'), true);
     $spreadsheetId = $input['spreadsheetId'] ?? '';
@@ -100,12 +113,16 @@ if (isset($_GET['action']) && $_GET['action'] === 'exportToGoogleSheet') {
     
     // Find upload script and credentials
     $projectRoot = dirname(__DIR__);
-    $credentialsPath = $projectRoot . '/config/service_account.json';
+    // Check shared directory first
+    $credentialsPath = $projectRoot . '/shared/service_account.json';
     $scriptPath = $projectRoot . '/db/upload_to_sheet.py';
     
     if (!file_exists($credentialsPath)) {
         unlink($tempFile);
-        echo json_encode(['success' => false, 'error' => 'Service account credentials not found at: ' . $credentialsPath]);
+        echo json_encode([
+            'success' => false, 
+            'error' => 'Googleサービスアカウントの認証情報が見つかりません。"shared" ディレクトリに "service_account.json" を配置してください。(' . $credentialsPath . ')'
+        ]);
         exit;
     }
     
@@ -130,7 +147,18 @@ if (isset($_GET['action']) && $_GET['action'] === 'exportToGoogleSheet') {
     unlink($tempFile);
     
     if ($returnVar !== 0) {
-        echo json_encode(['success' => false, 'error' => implode("\n", $output)]);
+        $errorOutput = implode("\n", $output);
+        $errorMsg = $errorOutput;
+
+        // Check for missing Python modules
+        if (strpos($errorOutput, 'ModuleNotFoundError') !== false || strpos($errorOutput, 'No module named') !== false) {
+            $errorMsg = "Google Sheets連携に必要なPythonライブラリが見つかりません。\n" .
+                        "サーバー管理者へ連絡し、以下のコマンドを実行してライブラリをインストールしてください：\n\n" .
+                        "pip install google-api-python-client google-auth-httplib2 google-auth-oauthlib\n\n" .
+                        "詳細エラー:\n" . $errorOutput;
+        }
+
+        echo json_encode(['success' => false, 'error' => $errorMsg]);
     } else {
         echo json_encode(['success' => true, 'output' => implode("\n", $output)]);
     }

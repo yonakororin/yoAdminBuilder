@@ -61,5 +61,22 @@ if (isset($_GET['debug_session'])) {
     exit;
 }
 
+// 2. Load user permissions from mnguser data
+$permissions = ['*']; // Default to admin for backward compatibility in builder
+$current_user = $_SESSION['user'] ?? '';
+
+if (!empty($current_user)) {
+    // Check mnguser data
+    // Path: ../adminTools/mnguser/data/users/{user}.json
+    $mnguser_file = dirname(__DIR__) . '/adminTools/mnguser/data/users/' . $current_user . '.json';
+    
+    if (file_exists($mnguser_file)) {
+        $user_data = json_decode(file_get_contents($mnguser_file), true);
+        if (is_array($user_data) && isset($user_data['permissions'])) {
+            $permissions = $user_data['permissions'];
+        }
+    }
+}
+
 // Authenticated - script execution continues in the file that required this
 ?>

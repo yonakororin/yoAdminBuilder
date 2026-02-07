@@ -281,12 +281,12 @@ $back_label = $admin_config['back_label'] ?? 'ポータルに戻る';
                 
                 switch(format) {
                     case 'csv':
-                        content = this._toCSV(st.originalData, st.columns, ',');
+                        content = this._toCSV(st.originalData, st.columns, ',', st.columnKeys);
                         mimeType = 'text/csv';
                         ext = 'csv';
                         break;
                     case 'tsv':
-                        content = this._toCSV(st.originalData, st.columns, '\t');
+                        content = this._toCSV(st.originalData, st.columns, '\t', st.columnKeys);
                         mimeType = 'text/tab-separated-values';
                         ext = 'tsv';
                         break;
@@ -311,11 +311,18 @@ $back_label = $admin_config['back_label'] ?? 'ポータルに戻る';
             },
             
             // Convert data to CSV/TSV format
-            _toCSV(data, columns, separator) {
+            _toCSV(data, columns, separator, columnKeys = []) {
                 const header = columns.join(separator);
                 const rows = data.map(row => {
-                    return columns.map(col => {
-                        const val = Array.isArray(row) ? row[columns.indexOf(col)] : row[col];
+                    return columns.map((col, colIdx) => {
+                        const key = (columnKeys && columnKeys.length > colIdx && columnKeys[colIdx]) 
+                            ? columnKeys[colIdx] 
+                            : col;
+                        
+                        // Handle both array-based rows (by index) and object-based rows (by key/col name)
+                        // If row is array, use colIdx. If object, use key.
+                        const val = Array.isArray(row) ? row[colIdx] : (row[key] ?? '');
+                        
                         let str = String(val ?? '');
                         // Escape quotes and wrap in quotes if contains separator or newline
                         if (str.includes(separator) || str.includes('\n') || str.includes('"')) {
@@ -341,7 +348,7 @@ $back_label = $admin_config['back_label'] ?? 'ポータルに戻る';
                 if (!sheetName) return;
                 
                 // Convert data to CSV
-                const csvContent = this._toCSV(st.originalData, st.columns, ',');
+                const csvContent = this._toCSV(st.originalData, st.columns, ',', st.columnKeys);
                 
                 // Send to backend
                 try {
