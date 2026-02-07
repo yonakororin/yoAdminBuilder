@@ -71,7 +71,7 @@ $back_label = $admin_config['back_label'] ?? 'ポータルに戻る';
             border: none;
         }
         .grid-item:hover { border-color: transparent; box-shadow: none; }
-        .item-content { padding: 0; height: 100%; overflow: hidden; }
+        .item-content { padding: 0; height: 100%; overflow: auto; }
         .grid { background: none !important; border: none !important; }
         .grid-container { background: var(--bg) !important; }
     </style>
@@ -802,7 +802,9 @@ $back_label = $admin_config['back_label'] ?? 'ポータルに戻る';
             `}).join('');
             
             // Load HTML files and execute scripts
+            // Load HTML/Markdown files and execute scripts
             loadHtmlFiles(g);
+            loadMarkdownFiles(g);
             executeScripts(g);
         }
         
@@ -823,6 +825,7 @@ $back_label = $admin_config['back_label'] ?? 'ポータルに戻る';
                 }).join('');
                 headerContainer.classList.add('active');
                 loadHtmlFiles(headerContainer);
+                loadMarkdownFiles(headerContainer);
                 executeScripts(headerContainer);
             } else {
                 headerContainer.innerHTML = '';
@@ -838,6 +841,7 @@ $back_label = $admin_config['back_label'] ?? 'ポータルに戻る';
                 }).join('');
                 footerContainer.classList.add('active');
                 loadHtmlFiles(footerContainer);
+                loadMarkdownFiles(footerContainer);
                 executeScripts(footerContainer);
             } else {
                 footerContainer.innerHTML = '';
@@ -856,6 +860,31 @@ $back_label = $admin_config['back_label'] ?? 'ポータルに戻る';
                         el.innerHTML = content;
                         // Execute any scripts in the loaded content
                         executeScripts(el);
+                    } else {
+                        el.innerHTML = `<span style="color:red;">Error loading file</span>`;
+                    }
+                } catch (e) {
+                    el.innerHTML = `<span style="color:red;">Load error: ${e.message}</span>`;
+                }
+            }
+        }
+
+        async function loadMarkdownFiles(container) {
+            const fileElements = container.querySelectorAll('.comp-markdown-file[data-file]');
+            for (const el of fileElements) {
+                const filePath = el.dataset.file;
+                try {
+                    const res = await fetch(`api.php?action=readfile&path=${encodeURIComponent(filePath)}`);
+                    if (res.ok) {
+                        const content = await res.text();
+                        if (typeof marked !== 'undefined') {
+                            el.innerHTML = marked.parse(content);
+                            // Add basic styles
+                            el.style.padding = '1rem';
+                            el.style.lineHeight = '1.6';
+                        } else {
+                            el.innerHTML = '<pre>' + content + '</pre>';
+                        }
                     } else {
                         el.innerHTML = `<span style="color:red;">Error loading file</span>`;
                     }
@@ -1024,6 +1053,14 @@ $back_label = $admin_config['back_label'] ?? 'ポータルに戻る';
                             </div>
                         </div>
                     `;
+                case 'markdown':
+                    if (comp.content) {
+                        return `<div class="comp-markdown">${typeof marked !== 'undefined' ? marked.parse(comp.content) : comp.content}</div>`;
+                    } else if (comp.filePath) {
+                        return `<div class="comp-markdown comp-markdown-file" data-file="${comp.filePath}"><i class="fa-solid fa-spinner fa-spin"></i> Loading...</div>`;
+                    } else {
+                        return `<div class="comp-markdown"></div>`;
+                    }
                 default:
                     return `<span>${label}</span>`;
             }

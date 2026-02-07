@@ -78,6 +78,8 @@ if (isset($_GET['action']) && $_GET['action'] === 'readfile') {
     exit;
 }
 
+
+
 // Google Spreadsheet export action
 if (isset($_GET['action']) && $_GET['action'] === 'exportToGoogleSheet') {
     header('Content-Type: application/json');
@@ -100,11 +102,6 @@ if (isset($_GET['action']) && $_GET['action'] === 'exportToGoogleSheet') {
     $projectRoot = dirname(__DIR__);
     $credentialsPath = $projectRoot . '/config/service_account.json';
     $scriptPath = $projectRoot . '/db/upload_to_sheet.py';
-    
-    // Fallback paths
-    if (!file_exists($scriptPath)) {
-        $scriptPath = $projectRoot . '/yoAnalyticsEditor/db/upload_to_sheet.py';
-    }
     
     if (!file_exists($credentialsPath)) {
         unlink($tempFile);
