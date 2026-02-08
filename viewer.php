@@ -668,8 +668,48 @@ $back_label = $admin_config['back_label'] ?? 'ポータルに戻る';
             const brandEl = document.querySelector('.brand a');
             if (brandEl) brandEl.innerHTML = `<i class="fa-solid fa-shapes"></i> ${state.brandTitle}`;
             
+            // Handle defaultOpen configuration
+            if (state.config.defaultOpen) {
+                const targetId = state.config.defaultOpen;
+                const menus = state.config.menus || [];
+                let found = false;
+                
+                for (const m of menus) {
+                    if (m.id === targetId) {
+                        state.selectedMenuId = m.id;
+                        if (m.submenus && m.submenus.length > 0) {
+                            state.selectedSubmenuId = m.submenus[0].id;
+                        }
+                        found = true;
+                    } else if (m.submenus) {
+                        const sub = m.submenus.find(s => s.id === targetId);
+                        if (sub) {
+                            state.selectedMenuId = m.id;
+                            state.selectedSubmenuId = sub.id;
+                            found = true;
+                        }
+                    }
+                    
+                    if (found) {
+                        // We use the global getTabs, but we must ensure state is set first (which it is)
+                        // However, getTabs() function is defined below. 
+                        // Since function declarations are hoisted, this is fine.
+                        const tabs = getTabs(); 
+                        if (tabs && tabs.length > 0) {
+                            state.activeTabId = tabs[0].id;
+                        }
+                        break;
+                    }
+                }
+            }
+
             renderSidebar();
             renderGlobalAreas();
+            
+            // If default was selected, show workspace
+            if (state.selectedMenuId) {
+                showWorkspace();
+            }
         }
 
         function renderSidebar() {
